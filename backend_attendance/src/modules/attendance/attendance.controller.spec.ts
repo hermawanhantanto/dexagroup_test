@@ -7,6 +7,7 @@ describe('AttendanceController', () => {
 
   beforeEach(() => {
     attendanceServiceMock = {
+      createUploadUrl: vi.fn(),
       checkIn: vi.fn(),
       getTodayStatus: vi.fn(),
       clockOut: vi.fn(),
@@ -14,6 +15,25 @@ describe('AttendanceController', () => {
     };
 
     attendanceController = new AttendanceController(attendanceServiceMock);
+  });
+
+  it('should call attendanceService.createUploadUrl with user sub and dto', async () => {
+    const mockUser = { sub: 'user-123', email: 'emp@dexa.com', role: 'EMPLOYEE' };
+    const mockDto = { mimeType: 'image/jpeg' as const, fileSize: 102400 };
+    const mockResponse = {
+      uploadUrl: 'https://test.supabase.co/upload',
+      publicUrl: 'https://test.supabase.co/public.jpg',
+      filePath: 'proofs/photo.jpg',
+      token: 'tok-123',
+      expiresIn: 120,
+    };
+
+    attendanceServiceMock.createUploadUrl.mockResolvedValue(mockResponse);
+
+    const result = await attendanceController.createUploadUrl(mockUser, mockDto);
+
+    expect(attendanceServiceMock.createUploadUrl).toHaveBeenCalledWith('user-123', mockDto);
+    expect(result).toEqual(mockResponse);
   });
 
   it('should call attendanceService.checkIn with user sub and dto', async () => {

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -8,14 +9,67 @@ import { AttendanceStatus } from '../../generated/prisma/enums.js';
 import { CheckInDto } from './dto/check-in.dto.js';
 import { ClockOutDto } from './dto/clock-out.dto.js';
 import { AttendanceHistoryQueryDto } from './dto/attendance-history-query.dto.js';
+import { CreateUploadUrlDto } from './dto/create-upload-url.dto.js';
+import { StorageService } from './storage.service.js';
 import {
   DEFAULT_ATTENDANCE_LIMIT,
   DEFAULT_ATTENDANCE_PAGE,
+  DEFAULT_UPLOAD_URL_EXPIRATION_SECONDS,
+  MIME_TO_EXTENSION_MAP,
 } from './attendance.constants.js';
 
 @Injectable()
 export class AttendanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
+
+  async createUploadUrl(userId: string, createUploadUrlDto: CreateUploadUrlDto) {
+    const currentCalendarDate = new Date();
+    const dayOfWeek = currentCalendarDate.getDay();
+
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      throw new BadRequestException('Attendance cannot be submitted on weekends');
+    }
+
+    const normalizedTodayDate = new Date(
+      Date.UTC(
+        currentCalendarDate.getUTCFullYear(),
+        currentCalendarDate.getUTCMonth(),
+        currentCalendarDate.getUTCDate(),
+      ),
+    );
+
+    const existingAttendanceRecord = await this.prisma.attendance.findUnique({
+      where: {
+        unique_user_attendance_per_date: {
+          userId,
+          attendanceDate: normalizedTodayDate,
+        },
+      },
+    });
+
+    if (existingAttendanceRecord) {
+      throw new ConflictException('You have already checked in for today');
+    }
+
+    const fileExtension = MIME_TO_EXTENSION_MAP[createUploadUrlDto.mimeType];
+
+    const formattedDateString = normalizedTodayDate.toISOString().slice(0, 10);
+
+    const uniqueFileIdentifier = randomUUID();
+    
+    const storageFilePath = `proofs/${userId}/${formattedDateString}_${uniqueFileIdentifier}${fileExtension}`;
+
+    const uploadCredentials =
+      await this.storageService.generateSignedUploadUrl(storageFilePath);
+
+    return {
+      ...uploadCredentials,
+      expiresIn: DEFAULT_UPLOAD_URL_EXPIRATION_SECONDS,
+    };
+  }
 
   async checkIn(userId: string, checkInDto: CheckInDto) {
     const currentCalendarDate = new Date();
@@ -170,7 +224,6 @@ export class AttendanceService {
         skip: skipOffset,
         take: recordsPerPageLimit,
       }),
-      
       this.prisma.attendance.count({
         where: attendanceFilterCondition,
       }),

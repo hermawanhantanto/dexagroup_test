@@ -6,6 +6,7 @@ import { AttendanceStatus } from '../../generated/prisma/enums.js';
 describe('AttendanceService', () => {
   let attendanceService: AttendanceService;
   let prismaMock: any;
+  let storageServiceMock: any;
 
   beforeEach(() => {
     prismaMock = {
@@ -21,7 +22,79 @@ describe('AttendanceService', () => {
       ),
     };
 
-    attendanceService = new AttendanceService(prismaMock);
+    storageServiceMock = {
+      generateSignedUploadUrl: vi.fn(),
+    };
+
+    attendanceService = new AttendanceService(prismaMock, storageServiceMock);
+  });
+
+  describe('createUploadUrl', () => {
+    it('should throw BadRequestException if today is a weekend', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-01T10:00:00Z'));
+
+      await expect(
+        attendanceService.createUploadUrl('user-1', {
+          mimeType: 'image/jpeg',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      vi.useRealTimers();
+    });
+
+    it('should throw ConflictException if already checked in today', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-02T08:30:00Z'));
+
+      prismaMock.attendance.findUnique.mockResolvedValue({
+        id: 'existing-id',
+        userId: 'user-1',
+        attendanceDate: new Date('2026-11-02T00:00:00Z'),
+        status: AttendanceStatus.PRESENT,
+      });
+
+      await expect(
+        attendanceService.createUploadUrl('user-1', {
+          mimeType: 'image/jpeg',
+        }),
+      ).rejects.toThrow(ConflictException);
+
+      vi.useRealTimers();
+    });
+
+    it('should generate signed upload URL and return upload credentials on a weekday', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-02T08:30:00Z'));
+
+      prismaMock.attendance.findUnique.mockResolvedValue(null);
+
+      const mockUploadResult = {
+        uploadUrl: 'https://test.supabase.co/upload-sign',
+        publicUrl: 'https://test.supabase.co/public/proofs/user-1/photo.jpg',
+        filePath: 'proofs/user-1/2026-11-02_mock.jpg',
+        token: 'token-abc',
+      };
+
+      storageServiceMock.generateSignedUploadUrl.mockResolvedValue(
+        mockUploadResult,
+      );
+
+      const result = await attendanceService.createUploadUrl('user-1', {
+        mimeType: 'image/jpeg',
+      });
+
+      expect(result).toEqual({
+        ...mockUploadResult,
+        expiresIn: 120,
+      });
+
+      expect(storageServiceMock.generateSignedUploadUrl).toHaveBeenCalledWith(
+        expect.stringMatching(/^proofs\/user-1\/2026-11-02_.*\.jpg$/),
+      );
+
+      vi.useRealTimers();
+    });
   });
 
   describe('checkIn', () => {

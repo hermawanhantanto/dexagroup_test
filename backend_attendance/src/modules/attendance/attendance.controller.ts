@@ -14,11 +14,24 @@ import { AttendanceService } from './attendance.service.js';
 import { CheckInDto } from './dto/check-in.dto.js';
 import { ClockOutDto } from './dto/clock-out.dto.js';
 import { AttendanceHistoryQueryDto } from './dto/attendance-history-query.dto.js';
+import { CreateUploadUrlDto } from './dto/create-upload-url.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
+
+  @Post('upload-url')
+  @HttpCode(HttpStatus.OK)
+  async createUploadUrl(
+    @CurrentUser() authenticatedUser: AuthenticatedUser,
+    @Body() createUploadUrlDto: CreateUploadUrlDto,
+  ) {
+    return this.attendanceService.createUploadUrl(
+      authenticatedUser.sub,
+      createUploadUrlDto,
+    );
+  }
 
   @Post('check-in')
   @HttpCode(HttpStatus.CREATED)
