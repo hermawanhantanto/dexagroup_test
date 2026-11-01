@@ -10,6 +10,7 @@ describe('AttendanceController', () => {
       checkIn: vi.fn(),
       getTodayStatus: vi.fn(),
       clockOut: vi.fn(),
+      getMyHistory: vi.fn(),
     };
 
     attendanceController = new AttendanceController(attendanceServiceMock);
@@ -56,5 +57,28 @@ describe('AttendanceController', () => {
       message: 'Attendance clocked out successfully',
       attendance: mockResponse,
     });
+  });
+
+  it('should call attendanceService.getMyHistory with user sub and query dto', async () => {
+    const mockUser = { sub: 'user-123', email: 'emp@dexa.com', role: 'EMPLOYEE' };
+    const mockQueryDto = { page: 1, limit: 10 };
+    const mockPaginatedResponse = {
+      data: [{ id: 'att-1' }],
+      pagination: {
+        totalRecords: 1,
+        currentPage: 1,
+        totalPages: 1,
+        limit: 10,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
+
+    attendanceServiceMock.getMyHistory.mockResolvedValue(mockPaginatedResponse);
+
+    const result = await attendanceController.getMyHistory(mockUser, mockQueryDto);
+
+    expect(attendanceServiceMock.getMyHistory).toHaveBeenCalledWith('user-123', mockQueryDto);
+    expect(result).toEqual(mockPaginatedResponse);
   });
 });

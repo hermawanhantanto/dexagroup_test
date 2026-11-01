@@ -7,6 +7,11 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { AttendanceStatus } from '../../generated/prisma/enums.js';
 import { CheckInDto } from './dto/check-in.dto.js';
 import { ClockOutDto } from './dto/clock-out.dto.js';
+import { AttendanceHistoryQueryDto } from './dto/attendance-history-query.dto.js';
+import {
+  DEFAULT_ATTENDANCE_LIMIT,
+  DEFAULT_ATTENDANCE_PAGE,
+} from './attendance.constants.js';
 
 @Injectable()
 export class AttendanceService {
@@ -118,5 +123,71 @@ export class AttendanceService {
         notes: updatedNotes,
       },
     });
+  }
+
+  async getMyHistory(userId: string, queryDto: AttendanceHistoryQueryDto) {
+    const targetPageNumber = queryDto.page ?? DEFAULT_ATTENDANCE_PAGE;
+    const recordsPerPageLimit = queryDto.limit ?? DEFAULT_ATTENDANCE_LIMIT;
+    const skipOffset = (targetPageNumber - 1) * recordsPerPageLimit;
+
+    if (
+      queryDto.startDate &&
+      queryDto.endDate &&
+      new Date(queryDto.startDate) > new Date(queryDto.endDate)
+    ) {
+      throw new BadRequestException('Start date cannot be after end date');
+    }
+
+    const attendanceFilterCondition: {
+      userId: string;
+      status?: AttendanceStatus;
+      attendanceDate?: {
+        gte?: Date;
+        lte?: Date;
+      };
+    } = {
+      userId,
+    };
+
+    if (queryDto.status) {
+      attendanceFilterCondition.status = queryDto.status;
+    }
+
+    if (queryDto.startDate || queryDto.endDate) {
+      attendanceFilterCondition.attendanceDate = {};
+      if (queryDto.startDate) {
+        attendanceFilterCondition.attendanceDate.gte = new Date(queryDto.startDate);
+      }
+      if (queryDto.endDate) {
+        attendanceFilterCondition.attendanceDate.lte = new Date(queryDto.endDate);
+      }
+    }
+
+    const [attendanceRecords, totalRecordCount] = await this.prisma.$transaction([
+      this.prisma.attendance.findMany({
+        where: attendanceFilterCondition,
+        orderBy: { attendanceDate: 'desc' },
+        skip: skipOffset,
+        take: recordsPerPageLimit,
+      }),
+      
+      this.prisma.attendance.count({
+        where: attendanceFilterCondition,
+      }),
+    ]);
+
+    const calculatedTotalPages = Math.ceil(totalRecordCount / recordsPerPageLimit);
+
+    return {
+      data: attendanceRecords,
+      pagination: {
+        totalRecords: totalRecordCount,
+        currentPage: targetPageNumber,
+        totalPages: calculatedTotalPages,
+        limit: recordsPerPageLimit,
+        hasNextPage: targetPageNumber < calculatedTotalPages,
+        hasPreviousPage: targetPageNumber > 1,
+      },
+    };
   }
 }

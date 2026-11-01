@@ -1,0 +1,5 @@
+export const DEFAULT_ATTENDANCE_PAGE = 1;
+export const DEFAULT_ATTENDANCE_LIMIT = 10;
+export const MIN_ATTENDANCE_PAGE = 1;
+export const MIN_ATTENDANCE_LIMIT = 1;
+export const MAX_ATTENDANCE_LIMIT = 50;

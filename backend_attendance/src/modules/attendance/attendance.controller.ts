@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard, type AuthenticatedUser } from '../../common/guards/jwt-auth.guard.js';
@@ -12,6 +13,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { AttendanceService } from './attendance.service.js';
 import { CheckInDto } from './dto/check-in.dto.js';
 import { ClockOutDto } from './dto/clock-out.dto.js';
+import { AttendanceHistoryQueryDto } from './dto/attendance-history-query.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('attendance')
@@ -56,5 +58,17 @@ export class AttendanceController {
       message: 'Attendance clocked out successfully',
       attendance: updatedAttendance,
     };
+  }
+
+  @Get('my-history')
+  @HttpCode(HttpStatus.OK)
+  async getMyHistory(
+    @CurrentUser() authenticatedUser: AuthenticatedUser,
+    @Query() attendanceHistoryQueryDto: AttendanceHistoryQueryDto,
+  ) {
+    return this.attendanceService.getMyHistory(
+      authenticatedUser.sub,
+      attendanceHistoryQueryDto,
+    );
   }
 }

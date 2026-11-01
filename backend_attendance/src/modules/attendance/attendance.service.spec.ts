@@ -11,9 +11,14 @@ describe('AttendanceService', () => {
     prismaMock = {
       attendance: {
         findUnique: vi.fn(),
+        findMany: vi.fn(),
+        count: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
       },
+      $transaction: vi.fn().mockImplementation((operations: Promise<any>[]) =>
+        Promise.all(operations),
+      ),
     };
 
     attendanceService = new AttendanceService(prismaMock);
@@ -90,9 +95,9 @@ describe('AttendanceService', () => {
   });
 
   describe('getTodayStatus', () => {
-    it('should return hasCheckedIn: false when record does not exist', async () => {
+    it('should return false flags when no record exists for today', async () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-11-02T09:00:00Z'));
+      vi.setSystemTime(new Date('2026-11-02T08:30:00Z'));
 
       prismaMock.attendance.findUnique.mockResolvedValue(null);
 
@@ -105,16 +110,16 @@ describe('AttendanceService', () => {
       vi.useRealTimers();
     });
 
-    it('should return hasCheckedIn: true and hasClockedOut: false when clocked in only', async () => {
+    it('should return hasCheckedIn: true and hasClockedOut: false when checked in but not clocked out', async () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-11-02T09:00:00Z'));
+      vi.setSystemTime(new Date('2026-11-02T08:30:00Z'));
 
       const mockRecord = {
         id: 'att-1',
         userId: 'user-1',
+        attendanceDate: new Date('2026-11-02T00:00:00Z'),
         clockInAt: new Date('2026-11-02T08:30:00Z'),
         clockOutAt: null,
-        notes: 'Morning note',
         status: AttendanceStatus.PRESENT,
       };
 
@@ -129,16 +134,16 @@ describe('AttendanceService', () => {
       vi.useRealTimers();
     });
 
-    it('should return hasClockedOut: true when clocked out', async () => {
+    it('should return hasCheckedIn: true and hasClockedOut: true when clocked out', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-11-02T17:00:00Z'));
 
       const mockRecord = {
         id: 'att-1',
         userId: 'user-1',
+        attendanceDate: new Date('2026-11-02T00:00:00Z'),
         clockInAt: new Date('2026-11-02T08:30:00Z'),
         clockOutAt: new Date('2026-11-02T17:00:00Z'),
-        notes: 'Completed tasks',
         status: AttendanceStatus.PRESENT,
       };
 
@@ -222,6 +227,82 @@ describe('AttendanceService', () => {
       });
 
       vi.useRealTimers();
+    });
+  });
+
+  describe('getMyHistory', () => {
+    it('should throw BadRequestException if startDate is after endDate', async () => {
+      await expect(
+        attendanceService.getMyHistory('user-1', {
+          startDate: '2026-11-10',
+          endDate: '2026-11-05',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should return paginated records and metadata using prisma transaction', async () => {
+      const mockRecords = [
+        {
+          id: 'att-1',
+          userId: 'user-1',
+          attendanceDate: new Date('2026-11-02'),
+          status: AttendanceStatus.PRESENT,
+        },
+      ];
+
+      prismaMock.attendance.findMany.mockResolvedValue(mockRecords);
+      prismaMock.attendance.count.mockResolvedValue(1);
+
+      const result = await attendanceService.getMyHistory('user-1', {});
+
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      expect(result.data).toEqual(mockRecords);
+      expect(result.pagination).toEqual({
+        totalRecords: 1,
+        currentPage: 1,
+        totalPages: 1,
+        limit: 10,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+
+      expect(prismaMock.attendance.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        orderBy: { attendanceDate: 'desc' },
+        skip: 0,
+        take: 10,
+      });
+    });
+
+    it('should apply status and date range filters when provided', async () => {
+      prismaMock.attendance.findMany.mockResolvedValue([]);
+      prismaMock.attendance.count.mockResolvedValue(0);
+
+      const result = await attendanceService.getMyHistory('user-1', {
+        page: 2,
+        limit: 5,
+        status: AttendanceStatus.PRESENT,
+        startDate: '2026-11-01',
+        endDate: '2026-11-15',
+      });
+
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      expect(result.pagination.currentPage).toBe(2);
+      expect(result.pagination.limit).toBe(5);
+
+      expect(prismaMock.attendance.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-1',
+          status: AttendanceStatus.PRESENT,
+          attendanceDate: {
+            gte: new Date('2026-11-01'),
+            lte: new Date('2026-11-15'),
+          },
+        },
+        orderBy: { attendanceDate: 'desc' },
+        skip: 5,
+        take: 5,
+      });
     });
   });
 });
