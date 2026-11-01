@@ -21,7 +21,7 @@ A WFH (Work From Home) Attendance and Employee Monitoring System. Employees can 
 ### 1. Backend Attendance (`backend_attendance`)
 - **Sign In**: Login with email and password. Returns a short-lived access token and sets a secure HTTP-only refresh token cookie.
 - **Refresh Token**: Refreshes expired access tokens with automatic token rotation to prevent theft.
-- **Check In**: Submits daily attendance with automatic date/time capture, work type (WFH/WFO), notes, and selfie photo upload.
+- **Check In**: Submits daily WFH attendance with automatic date/time capture, notes, and selfie photo proof upload.
 - **My Attendance History**: Returns the logged-in employee's personal attendance records.
 
 ### 2. Backend Monitoring (`backend_monitoring`)
@@ -61,3 +61,41 @@ A WFH (Work From Home) Attendance and Employee Monitoring System. Employees can 
 
 - **Departments**:
   - Examples: Engineering, Human Resources, Marketing, Finance.
+
+---
+
+# Database Schema (MySQL)
+
+### Users (`users`)
+- `id`: UUID (Primary Key)
+- `email`: String (Unique)
+- `password`: String (Hashed with bcrypt)
+- `first_name`: String
+- `last_name`: String (Optional)
+- `position`: String (e.g. Programmer, HR Specialist)
+- `department`: String (e.g. Engineering, HR)
+- `date_of_birth`: Date (Optional)
+- `gender`: MALE / FEMALE (Optional)
+- `role`: EMPLOYEE / HR_ADMIN (Default: EMPLOYEE)
+- `salary`: Decimal (Optional)
+- `join_date`: Date (Optional)
+- `refresh_token`: Text (Hashed, for session rotation)
+- `created_at`, `updated_at`: Timestamps
+
+### Attendances (`attendances`)
+- `id`: UUID (Primary Key)
+- `user_id`: UUID (Foreign Key -> users.id)
+- `attendance_date`: Date (One record per employee per day)
+- `clock_in_at`: Timestamp
+- `clock_out_at`: Timestamp (Optional)
+- `proof_image_url`: Text (Saved photo file path)
+- `notes`: Text (Optional)
+- `status`: PRESENT / SICK / LEAVE / ABSENT (Default: PRESENT)
+- `created_at`, `updated_at`: Timestamps
+
+### Holidays (`holidays`)
+- `id`: UUID (Primary Key)
+- `holiday_date`: Date (Unique)
+- `name`: String (e.g. "Tahun Baru", "Hari Kemerdekaan RI")
+- `description`: Text (Optional)
+- `created_at`, `updated_at`: Timestamps

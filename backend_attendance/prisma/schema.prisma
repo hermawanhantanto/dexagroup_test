@@ -17,11 +17,6 @@ enum Gender {
   FEMALE
 }
 
-enum WorkType {
-  WFO
-  WFH
-}
-
 enum AttendanceStatus {
   PRESENT
   SICK
@@ -60,7 +55,6 @@ model Attendance {
   userId         String           @map("user_id")
 
   attendanceDate DateTime         @map("attendance_date") @db.Date
-  workType       WorkType?        @map("work_type")
   clockInAt      DateTime?        @map("clock_in_at")
   clockOutAt     DateTime?        @map("clock_out_at")
   proofImageUrl  String?          @map("proof_image_url") @db.Text
