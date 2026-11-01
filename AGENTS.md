@@ -22,3 +22,7 @@
 > **3. NO AUTOMATIC CODE COMMENTS (`//`).**
 > - Do not automatically add inline comments (`// ...`) to explain what code does.
 > - Write clean, self-documenting code with clear method and variable names. Only add comments if explicitly requested by the user.
+>
+> **4. STRICT SCOPE ADHERENCE.**
+> - Strictly implement ONLY what the user explicitly requests.
+> - Never preemptively add speculative, 'nice-to-have', or unrequested endpoints, methods, services, or features beyond the direct user prompt. Keep the codebase focused and free of scope creep.
