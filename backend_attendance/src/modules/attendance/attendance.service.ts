@@ -10,7 +10,7 @@ import { CheckInDto } from './dto/check-in.dto.js';
 import { ClockOutDto } from './dto/clock-out.dto.js';
 import { AttendanceHistoryQueryDto } from './dto/attendance-history-query.dto.js';
 import { CreateUploadUrlDto } from './dto/create-upload-url.dto.js';
-import { StorageService } from './storage.service.js';
+import { StorageService } from '../../storage/storage.service.js';
 import {
   DEFAULT_ATTENDANCE_LIMIT,
   DEFAULT_ATTENDANCE_PAGE,
@@ -55,11 +55,8 @@ export class AttendanceService {
     }
 
     const fileExtension = MIME_TO_EXTENSION_MAP[createUploadUrlDto.mimeType];
-
     const formattedDateString = normalizedTodayDate.toISOString().slice(0, 10);
-
     const uniqueFileIdentifier = randomUUID();
-    
     const storageFilePath = `proofs/${userId}/${formattedDateString}_${uniqueFileIdentifier}${fileExtension}`;
 
     const uploadCredentials =

@@ -21,4 +21,3 @@ export const MIME_TO_EXTENSION_MAP: Record<AllowedPhotoMimeType, string> = {
 export const MAX_PHOTO_FILE_SIZE = 5242880;
 export const MIN_PHOTO_FILE_SIZE = 1;
 export const DEFAULT_UPLOAD_URL_EXPIRATION_SECONDS = 120;
-export const DEFAULT_STORAGE_BUCKET = 'attendance-proofs';
