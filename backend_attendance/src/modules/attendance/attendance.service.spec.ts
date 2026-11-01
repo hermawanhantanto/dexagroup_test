@@ -12,6 +12,7 @@ describe('AttendanceService', () => {
       attendance: {
         findUnique: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
       },
     };
 
@@ -82,6 +83,142 @@ describe('AttendanceService', () => {
           proofImageUrl: 'https://supabase.co/storage/photo.jpg',
           status: AttendanceStatus.PRESENT,
         }),
+      });
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('getTodayStatus', () => {
+    it('should return hasCheckedIn: false when record does not exist', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-02T09:00:00Z'));
+
+      prismaMock.attendance.findUnique.mockResolvedValue(null);
+
+      const result = await attendanceService.getTodayStatus('user-1');
+
+      expect(result.hasCheckedIn).toBe(false);
+      expect(result.hasClockedOut).toBe(false);
+      expect(result.attendance).toBeNull();
+
+      vi.useRealTimers();
+    });
+
+    it('should return hasCheckedIn: true and hasClockedOut: false when clocked in only', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-02T09:00:00Z'));
+
+      const mockRecord = {
+        id: 'att-1',
+        userId: 'user-1',
+        clockInAt: new Date('2026-11-02T08:30:00Z'),
+        clockOutAt: null,
+        notes: 'Morning note',
+        status: AttendanceStatus.PRESENT,
+      };
+
+      prismaMock.attendance.findUnique.mockResolvedValue(mockRecord);
+
+      const result = await attendanceService.getTodayStatus('user-1');
+
+      expect(result.hasCheckedIn).toBe(true);
+      expect(result.hasClockedOut).toBe(false);
+      expect(result.attendance).toEqual(mockRecord);
+
+      vi.useRealTimers();
+    });
+
+    it('should return hasClockedOut: true when clocked out', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-02T17:00:00Z'));
+
+      const mockRecord = {
+        id: 'att-1',
+        userId: 'user-1',
+        clockInAt: new Date('2026-11-02T08:30:00Z'),
+        clockOutAt: new Date('2026-11-02T17:00:00Z'),
+        notes: 'Completed tasks',
+        status: AttendanceStatus.PRESENT,
+      };
+
+      prismaMock.attendance.findUnique.mockResolvedValue(mockRecord);
+
+      const result = await attendanceService.getTodayStatus('user-1');
+
+      expect(result.hasCheckedIn).toBe(true);
+      expect(result.hasClockedOut).toBe(true);
+      expect(result.attendance).toEqual(mockRecord);
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('clockOut', () => {
+    it('should throw BadRequestException if user has not checked in today', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-02T17:00:00Z'));
+
+      prismaMock.attendance.findUnique.mockResolvedValue(null);
+
+      await expect(
+        attendanceService.clockOut('user-1', { notes: 'EOD report' }),
+      ).rejects.toThrow(BadRequestException);
+
+      vi.useRealTimers();
+    });
+
+    it('should throw ConflictException if user has already clocked out today', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-02T17:00:00Z'));
+
+      prismaMock.attendance.findUnique.mockResolvedValue({
+        id: 'att-1',
+        userId: 'user-1',
+        clockInAt: new Date('2026-11-02T08:30:00Z'),
+        clockOutAt: new Date('2026-11-02T16:30:00Z'),
+      });
+
+      await expect(
+        attendanceService.clockOut('user-1', { notes: 'Double clock-out' }),
+      ).rejects.toThrow(ConflictException);
+
+      vi.useRealTimers();
+    });
+
+    it('should update clockOutAt and notes when valid', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-02T17:00:00Z'));
+
+      const initialRecord = {
+        id: 'att-1',
+        userId: 'user-1',
+        clockInAt: new Date('2026-11-02T08:30:00Z'),
+        clockOutAt: null,
+        notes: 'Morning note',
+      };
+
+      prismaMock.attendance.findUnique.mockResolvedValue(initialRecord);
+
+      const updatedRecord = {
+        ...initialRecord,
+        clockOutAt: new Date('2026-11-02T17:00:00Z'),
+        notes: 'Updated EOD note',
+      };
+
+      prismaMock.attendance.update.mockResolvedValue(updatedRecord);
+
+      const result = await attendanceService.clockOut('user-1', {
+        notes: 'Updated EOD note',
+      });
+
+      expect(result).toEqual(updatedRecord);
+      expect(prismaMock.attendance.update).toHaveBeenCalledWith({
+        where: { id: 'att-1' },
+        data: {
+          clockOutAt: expect.any(Date),
+          notes: 'Updated EOD note',
+        },
       });
 
       vi.useRealTimers();
