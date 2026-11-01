@@ -56,6 +56,50 @@ export class AuthService implements OnModuleInit {
     };
   }
 
+  async refreshTokens(refreshToken: string) {
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET') || 'default_refresh_secret';
+    
+    let payload: { sub: string };
+
+    try {
+      payload = await this.jwtService.verifyAsync(refreshToken, { secret: refreshSecret });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException('Access denied');
+    }
+
+    const isRefreshTokenMatching = await bcrypt.compare(refreshToken, user.refreshToken);
+
+    if (!isRefreshTokenMatching) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { refreshToken: null },
+      });
+      throw new UnauthorizedException('Access denied');
+    }
+
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+
+    const hashedNewRefreshToken = await bcrypt.hash(
+      tokens.refreshToken,
+      AUTH_CONSTANTS.BCRYPT_SALT_ROUNDS,
+    );
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken: hashedNewRefreshToken },
+    });
+
+    return tokens;
+  }
+
   private sanitizeUser<T extends { password?: string; refreshToken?: string | null }>(user: T) {
     const {
       password: _excludedPassword,
@@ -80,7 +124,6 @@ export class AuthService implements OnModuleInit {
         { sub: userId, email, role },
         { secret: accessSecret, expiresIn: accessExpiresIn },
       ),
-      
       this.jwtService.signAsync(
         { sub: userId },
         { secret: refreshSecret, expiresIn: refreshExpiresIn },

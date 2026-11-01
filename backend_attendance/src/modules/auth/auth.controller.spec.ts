@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { UnauthorizedException } from '@nestjs/common';
 import { AuthController } from './auth.controller.js';
 
 describe('AuthController', () => {
@@ -8,53 +9,104 @@ describe('AuthController', () => {
   beforeEach(() => {
     authServiceMock = {
       signIn: vi.fn(),
+      refreshTokens: vi.fn(),
     };
     authController = new AuthController(authServiceMock);
   });
 
-  it('should call authService.signIn, set cookie, and return response payload', async () => {
-    const mockResult = {
-      accessToken: 'access_jwt',
-      refreshToken: 'refresh_jwt',
-      user: {
-        id: '123',
+  describe('signIn', () => {
+    it('should call authService.signIn, set cookie, and return response payload', async () => {
+      const mockResult = {
+        accessToken: 'access_jwt',
+        refreshToken: 'refresh_jwt',
+        user: {
+          id: '123',
+          email: 'test@example.com',
+          firstName: 'Dexa',
+          role: 'EMPLOYEE',
+        },
+      };
+
+      authServiceMock.signIn.mockResolvedValue(mockResult);
+
+      const cookieMock = vi.fn();
+      const resMock: any = {
+        cookie: cookieMock,
+      };
+
+      const response = await authController.signIn(
+        { email: 'test@example.com', password: 'password123' },
+        resMock,
+      );
+
+      expect(authServiceMock.signIn).toHaveBeenCalledWith({
         email: 'test@example.com',
-        firstName: 'Dexa',
-        role: 'EMPLOYEE',
-      },
-    };
+        password: 'password123',
+      });
 
-    authServiceMock.signIn.mockResolvedValue(mockResult);
+      expect(cookieMock).toHaveBeenCalledWith(
+        'refresh_token',
+        'refresh_jwt',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        }),
+      );
 
-    const cookieMock = vi.fn();
-    const resMock: any = {
-      cookie: cookieMock,
-    };
+      expect(response).toEqual({
+        message: 'Sign-in successful',
+        accessToken: 'access_jwt',
+        user: mockResult.user,
+      });
+    });
+  });
 
-    const response = await authController.signIn(
-      { email: 'test@example.com', password: 'password123' },
-      resMock,
-    );
+  describe('refresh', () => {
+    it('should throw UnauthorizedException when refresh token cookie is missing', async () => {
+      const reqMock: any = { cookies: {} };
+      const resMock: any = { cookie: vi.fn() };
 
-    expect(authServiceMock.signIn).toHaveBeenCalledWith({
-      email: 'test@example.com',
-      password: 'password123',
+      await expect(authController.refresh(reqMock, resMock)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
-    expect(cookieMock).toHaveBeenCalledWith(
-      'refresh_token',
-      'refresh_jwt',
-      expect.objectContaining({
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-      }),
-    );
+    it('should rotate tokens, update cookie, and return new access token', async () => {
+      const reqMock: any = {
+        cookies: {
+          refresh_token: 'valid_refresh_cookie',
+        },
+      };
 
-    expect(response).toEqual({
-      message: 'Sign-in successful',
-      accessToken: 'access_jwt',
-      user: mockResult.user,
+      const rotatedTokens = {
+        accessToken: 'new_access_jwt',
+        refreshToken: 'new_refresh_jwt',
+      };
+
+      authServiceMock.refreshTokens.mockResolvedValue(rotatedTokens);
+
+      const cookieMock = vi.fn();
+      const resMock: any = { cookie: cookieMock };
+
+      const response = await authController.refresh(reqMock, resMock);
+
+      expect(authServiceMock.refreshTokens).toHaveBeenCalledWith('valid_refresh_cookie');
+
+      expect(cookieMock).toHaveBeenCalledWith(
+        'refresh_token',
+        'new_refresh_jwt',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        }),
+      );
+
+      expect(response).toEqual({
+        message: 'Tokens refreshed successfully',
+        accessToken: 'new_access_jwt',
+      });
     });
   });
 });

@@ -19,6 +19,7 @@ describe('AuthService', () => {
 
     jwtMock = {
       signAsync: vi.fn(),
+      verifyAsync: vi.fn(),
     };
 
     configMock = {
@@ -35,74 +36,144 @@ describe('AuthService', () => {
     await authService.onModuleInit();
   });
 
-  it('should throw UnauthorizedException when user does not exist', async () => {
-    prismaMock.user.findUnique.mockResolvedValue(null);
+  describe('signIn', () => {
+    it('should throw UnauthorizedException when user does not exist', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null);
 
-    await expect(
-      authService.signIn({ email: 'nonexistent@example.com', password: 'password123' }),
-    ).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.signIn({ email: 'nonexistent@example.com', password: 'password123' }),
+      ).rejects.toThrow(UnauthorizedException);
 
-    expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-      where: { email: 'nonexistent@example.com' },
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'nonexistent@example.com' },
+      });
+    });
+
+    it('should throw UnauthorizedException when password is wrong', async () => {
+      const hashedPassword = await bcrypt.hash('correct_password', 10);
+      prismaMock.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@example.com',
+        password: hashedPassword,
+        role: 'EMPLOYEE',
+      });
+
+      await expect(
+        authService.signIn({ email: 'user@example.com', password: 'wrong_password' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should return tokens and sanitized user when credentials are valid', async () => {
+      const rawPassword = 'correct_password';
+      const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
+      const mockUser = {
+        id: 'user-123',
+        email: 'user@example.com',
+        password: hashedPassword,
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'EMPLOYEE',
+        refreshToken: null,
+      };
+
+      prismaMock.user.findUnique.mockResolvedValue(mockUser);
+      prismaMock.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'hashed_rt' });
+
+      jwtMock.signAsync
+        .mockResolvedValueOnce('mock_access_token')
+        .mockResolvedValueOnce('mock_refresh_token');
+
+      const result = await authService.signIn({
+        email: 'user@example.com',
+        password: rawPassword,
+      });
+
+      expect(result.accessToken).toBe('mock_access_token');
+      expect(result.refreshToken).toBe('mock_refresh_token');
+      expect(result.user).toEqual({
+        id: 'user-123',
+        email: 'user@example.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'EMPLOYEE',
+      });
+      expect((result.user as any).password).toBeUndefined();
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'user-123' },
+          data: { refreshToken: expect.any(String) },
+        }),
+      );
     });
   });
 
-  it('should throw UnauthorizedException when password is wrong', async () => {
-    const hashedPassword = await bcrypt.hash('correct_password', 10);
-    prismaMock.user.findUnique.mockResolvedValue({
-      id: 'user-1',
-      email: 'user@example.com',
-      password: hashedPassword,
-      role: 'EMPLOYEE',
+  describe('refreshTokens', () => {
+    it('should throw UnauthorizedException when refresh token verification fails', async () => {
+      jwtMock.verifyAsync.mockRejectedValue(new Error('Invalid token'));
+
+      await expect(authService.refreshTokens('invalid_token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
-    await expect(
-      authService.signIn({ email: 'user@example.com', password: 'wrong_password' }),
-    ).rejects.toThrow(UnauthorizedException);
-  });
+    it('should throw UnauthorizedException when user does not exist or has no refresh token', async () => {
+      jwtMock.verifyAsync.mockResolvedValue({ sub: 'user-123' });
+      prismaMock.user.findUnique.mockResolvedValue(null);
 
-  it('should return tokens and sanitized user when credentials are valid', async () => {
-    const rawPassword = 'correct_password';
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
-
-    const mockUser = {
-      id: 'user-123',
-      email: 'user@example.com',
-      password: hashedPassword,
-      firstName: 'John',
-      lastName: 'Doe',
-      role: 'EMPLOYEE',
-      refreshToken: null,
-    };
-
-    prismaMock.user.findUnique.mockResolvedValue(mockUser);
-    prismaMock.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'hashed_rt' });
-
-    jwtMock.signAsync
-      .mockResolvedValueOnce('mock_access_token')
-      .mockResolvedValueOnce('mock_refresh_token');
-
-    const result = await authService.signIn({
-      email: 'user@example.com',
-      password: rawPassword,
+      await expect(authService.refreshTokens('valid_token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
-    expect(result.accessToken).toBe('mock_access_token');
-    expect(result.refreshToken).toBe('mock_refresh_token');
-    expect(result.user).toEqual({
-      id: 'user-123',
-      email: 'user@example.com',
-      firstName: 'John',
-      lastName: 'Doe',
-      role: 'EMPLOYEE',
-    });
-    expect((result.user as any).password).toBeUndefined();
+    it('should detect token theft, revoke token in DB, and throw UnauthorizedException when hash mismatch', async () => {
+      const storedHashedToken = await bcrypt.hash('different_token', 10);
+      jwtMock.verifyAsync.mockResolvedValue({ sub: 'user-123' });
+      prismaMock.user.findUnique.mockResolvedValue({
+        id: 'user-123',
+        email: 'user@example.com',
+        role: 'EMPLOYEE',
+        refreshToken: storedHashedToken,
+      });
 
-    expect(prismaMock.user.update).toHaveBeenCalledWith(
-      expect.objectContaining({
+      await expect(authService.refreshTokens('stolen_reused_token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
         where: { id: 'user-123' },
-        data: { refreshToken: expect.any(String) },
-      }),
-    );
+        data: { refreshToken: null },
+      });
+    });
+
+    it('should rotate tokens and return new token pair when refresh token matches', async () => {
+      const incomingToken = 'incoming_refresh_token';
+      const storedHash = await bcrypt.hash(incomingToken, 10);
+
+      jwtMock.verifyAsync.mockResolvedValue({ sub: 'user-123' });
+      prismaMock.user.findUnique.mockResolvedValue({
+        id: 'user-123',
+        email: 'user@example.com',
+        role: 'EMPLOYEE',
+        refreshToken: storedHash,
+      });
+
+      jwtMock.signAsync
+        .mockResolvedValueOnce('new_access_token')
+        .mockResolvedValueOnce('new_rotated_refresh_token');
+
+      const result = await authService.refreshTokens(incomingToken);
+
+      expect(result.accessToken).toBe('new_access_token');
+      expect(result.refreshToken).toBe('new_rotated_refresh_token');
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'user-123' },
+          data: { refreshToken: expect.any(String) },
+        }),
+      );
+    });
   });
 });
