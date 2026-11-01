@@ -66,7 +66,7 @@ model Attendance {
   proofImageUrl  String?          @map("proof_image_url") @db.Text
   notes          String?          @db.Text
   status         AttendanceStatus @default(PRESENT)
-  
+
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
 
@@ -74,4 +74,16 @@ model Attendance {
 
   @@unique([userId, attendanceDate], name: "unique_user_attendance_per_date")
   @@map("attendances")
+}
+
+model Holiday {
+  id          String   @id @default(uuid())
+
+  holidayDate DateTime @unique @map("holiday_date") @db.Date
+  name        String
+  description String?  @db.Text
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@map("holidays")
 }

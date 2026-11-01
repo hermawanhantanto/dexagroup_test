@@ -35,6 +35,8 @@ A WFH (Work From Home) Attendance and Employee Monitoring System. Employees can 
 - **Attendance Monitoring (View Only)**:
   - View all employee attendance records with date filters.
   - View attendance details including clock-in time and photo proof.
+- **Holiday Management**:
+  - Mark specific dates as holidays (e.g., national holidays, company off days).
 
 ### 3. Frontend (`frontend`)
 - **Login Page**: Simple email and password form.
