@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { EmployeesModule } from './modules/employees/employees.module.js';
+import { AttendanceModule } from './modules/attendance/attendance.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { EmployeesModule } from './modules/employees/employees.module.js';
     PrismaModule,
     AuthModule,
     EmployeesModule,
+    AttendanceModule,
   ],
   controllers: [],
   providers: [
