@@ -11,6 +11,7 @@ import { ROUTE_PATHS } from "@/constants/routes"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { EmployeeTable } from "@/features/monitoring/components/EmployeeTable"
 import { AttendanceMonitoringTable } from "@/features/monitoring/components/AttendanceMonitoringTable"
+import { HolidayManagementList } from "@/features/monitoring/components/HolidayManagementList"
 
 type MonitoringActiveTab =
   (typeof MONITORING_TABS)[keyof typeof MONITORING_TABS]
@@ -73,6 +74,18 @@ export function MonitoringPage() {
           >
             {MONITORING_DASHBOARD_TEXTS.TAB_ATTENDANCE}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab(MONITORING_TABS.HOLIDAYS)}
+            className={`pb-3 pt-2 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+              activeTab === MONITORING_TABS.HOLIDAYS
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {MONITORING_DASHBOARD_TEXTS.TAB_HOLIDAYS}
+          </button>
         </div>
       </header>
 
@@ -81,6 +94,7 @@ export function MonitoringPage() {
         {activeTab === MONITORING_TABS.ATTENDANCE && (
           <AttendanceMonitoringTable />
         )}
+        {activeTab === MONITORING_TABS.HOLIDAYS && <HolidayManagementList />}
       </main>
     </div>
   )
