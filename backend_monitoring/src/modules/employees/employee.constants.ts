@@ -5,6 +5,7 @@ export const EMPLOYEE_CONSTANTS = {
   DEFAULT_ROLE: Role.EMPLOYEE,
   CREATE_SUCCESS_MESSAGE: 'Employee created successfully',
   UPDATE_SUCCESS_MESSAGE: 'Employee updated successfully',
+  DELETE_SUCCESS_MESSAGE: 'Employee deleted successfully',
   GET_EMPLOYEE_SUCCESS_MESSAGE: 'Employee retrieved successfully',
   GET_ALL_EMPLOYEES_SUCCESS_MESSAGE: 'Employees retrieved successfully',
   DEFAULT_PAGE: 1,

@@ -243,4 +243,26 @@ export class EmployeesService {
       },
     };
   }
+
+  async deleteEmployee(employeeId: string) {
+    const existingEmployee = await this.prisma.user.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!existingEmployee) {
+      throw new NotFoundException(EMPLOYEE_ERROR_MESSAGES.EMPLOYEE_NOT_FOUND);
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.attendance.deleteMany({
+        where: { userId: employeeId },
+      }),
+      
+      this.prisma.user.delete({
+        where: { id: employeeId },
+      }),
+    ]);
+
+    return { id: employeeId };
+  }
 }

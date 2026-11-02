@@ -12,6 +12,7 @@ describe('EmployeesController', () => {
       updateEmployee: vi.fn(),
       getEmployeeById: vi.fn(),
       getAllEmployees: vi.fn(),
+      deleteEmployee: vi.fn(),
     };
     employeesController = new EmployeesController(employeesServiceMock);
   });
@@ -130,6 +131,23 @@ describe('EmployeesController', () => {
         message: EMPLOYEE_CONSTANTS.GET_ALL_EMPLOYEES_SUCCESS_MESSAGE,
         data: mockResult.data,
         pagination: mockResult.pagination,
+      });
+    });
+  });
+
+  describe('deleteEmployee', () => {
+    it('should call employeesService.deleteEmployee and return delete confirmation payload', async () => {
+      const mockResult = { id: 'user-uuid-1' };
+      employeesServiceMock.deleteEmployee.mockResolvedValue(mockResult);
+
+      const response = await employeesController.deleteEmployee('user-uuid-1');
+
+      expect(employeesServiceMock.deleteEmployee).toHaveBeenCalledWith(
+        'user-uuid-1',
+      );
+      expect(response).toEqual({
+        message: EMPLOYEE_CONSTANTS.DELETE_SUCCESS_MESSAGE,
+        data: mockResult,
       });
     });
   });

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -75,6 +76,18 @@ export class EmployeesController {
     return {
       message: EMPLOYEE_CONSTANTS.GET_EMPLOYEE_SUCCESS_MESSAGE,
       data: retrievedEmployee,
+    };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  async deleteEmployee(@Param('id', new ParseUUIDPipe()) employeeId: string) {
+    const deletedEmployee =
+      await this.employeesService.deleteEmployee(employeeId);
+
+    return {
+      message: EMPLOYEE_CONSTANTS.DELETE_SUCCESS_MESSAGE,
+      data: deletedEmployee,
     };
   }
 }

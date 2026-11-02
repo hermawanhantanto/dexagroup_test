@@ -18,6 +18,10 @@ describe('EmployeesService', () => {
         count: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
+        delete: vi.fn(),
+      },
+      attendance: {
+        deleteMany: vi.fn(),
       },
       $transaction: vi.fn((operations) => Promise.all(operations)),
     };
@@ -496,6 +500,46 @@ describe('EmployeesService', () => {
         totalPages: 3,
         recordsPerPage: 10,
       });
+    });
+  });
+
+  describe('deleteEmployee', () => {
+    it('should throw NotFoundException when employee to delete does not exist', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        employeesService.deleteEmployee('non-existent-uuid'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'non-existent-uuid' },
+      });
+      expect(prismaMock.attendance.deleteMany).not.toHaveBeenCalled();
+      expect(prismaMock.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('should remove employee attendances and delete user record in a transaction when employee exists', async () => {
+      const mockEmployee = {
+        id: 'user-uuid-1',
+        email: 'employee@example.com',
+      };
+      prismaMock.user.findUnique.mockResolvedValue(mockEmployee);
+      prismaMock.attendance.deleteMany.mockResolvedValue({ count: 5 });
+      prismaMock.user.delete.mockResolvedValue(mockEmployee);
+
+      const result = await employeesService.deleteEmployee('user-uuid-1');
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-uuid-1' },
+      });
+      expect(prismaMock.attendance.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-uuid-1' },
+      });
+      expect(prismaMock.user.delete).toHaveBeenCalledWith({
+        where: { id: 'user-uuid-1' },
+      });
+      expect(prismaMock.$transaction).toHaveBeenCalled();
+      expect(result).toEqual({ id: 'user-uuid-1' });
     });
   });
 });
