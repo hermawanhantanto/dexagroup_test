@@ -1,9 +1,12 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { App } from "@/App"
 import { ROUTE_PATHS } from "@/constants/routes"
+import { AuthProvider } from "@/features/auth/context/auth-context"
+import { AuthPage } from "@/pages/AuthPage"
+import { AttendancePage } from "@/pages/AttendancePage"
+import { MonitoringPage } from "@/pages/MonitoringPage"
 import "@/index.css"
 
 const queryClient = new QueryClient()
@@ -17,11 +20,29 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path={ROUTE_PATHS.ROOT} element={<App />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path={ROUTE_PATHS.ROOT}
+              element={<Navigate to={ROUTE_PATHS.AUTH} replace />}
+            />
+            <Route path={ROUTE_PATHS.AUTH} element={<AuthPage />} />
+            <Route
+              path={ROUTE_PATHS.ATTENDANCE}
+              element={<AttendancePage />}
+            />
+            <Route
+              path={ROUTE_PATHS.MONITORING}
+              element={<MonitoringPage />}
+            />
+            <Route
+              path="*"
+              element={<Navigate to={ROUTE_PATHS.AUTH} replace />}
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
-  </StrictMode>
+  </StrictMode>,
 )
