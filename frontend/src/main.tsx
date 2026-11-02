@@ -2,8 +2,10 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { USER_ROLES } from "@/constants/auth"
 import { ROUTE_PATHS } from "@/constants/routes"
 import { AuthProvider } from "@/features/auth/context/auth-context"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { AuthPage } from "@/pages/AuthPage"
 import { AttendancePage } from "@/pages/AttendancePage"
 import { MonitoringPage } from "@/pages/MonitoringPage"
@@ -30,11 +32,19 @@ createRoot(rootElement).render(
             <Route path={ROUTE_PATHS.AUTH} element={<AuthPage />} />
             <Route
               path={ROUTE_PATHS.ATTENDANCE}
-              element={<AttendancePage />}
+              element={
+                <ProtectedRoute requiredRole={USER_ROLES.EMPLOYEE}>
+                  <AttendancePage />
+                </ProtectedRoute>
+              }
             />
             <Route
               path={ROUTE_PATHS.MONITORING}
-              element={<MonitoringPage />}
+              element={
+                <ProtectedRoute requiredRole={USER_ROLES.HR_ADMIN}>
+                  <MonitoringPage />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="*"
