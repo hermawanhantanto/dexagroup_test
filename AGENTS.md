@@ -26,3 +26,7 @@
 > **4. STRICT SCOPE ADHERENCE.**
 > - Strictly implement ONLY what the user explicitly requests.
 > - Never preemptively add speculative, 'nice-to-have', or unrequested endpoints, methods, services, or features beyond the direct user prompt. Keep the codebase focused and free of scope creep.
+>
+> **5. DYNAMIC OBJECT ITERATION FOR PARTIAL UPDATES.**
+> - Prefer dynamic iteration (`Object.entries`) over repetitive cascading `if (dto.field !== undefined)` statements when building partial update payloads.
+> - Handle special-case transformations (e.g., password hashing, email uniqueness checks, string trimming, and date/type parsing for Prisma/database schemas) cleanly inside the loop while delegating remaining fields dynamically.

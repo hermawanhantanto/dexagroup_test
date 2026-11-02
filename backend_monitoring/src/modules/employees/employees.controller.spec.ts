@@ -9,6 +9,7 @@ describe('EmployeesController', () => {
   beforeEach(() => {
     employeesServiceMock = {
       createEmployee: vi.fn(),
+      updateEmployee: vi.fn(),
     };
     employeesController = new EmployeesController(employeesServiceMock);
   });
@@ -37,6 +38,38 @@ describe('EmployeesController', () => {
       expect(employeesServiceMock.createEmployee).toHaveBeenCalledWith(payload);
       expect(response).toEqual({
         message: EMPLOYEE_CONSTANTS.CREATE_SUCCESS_MESSAGE,
+        data: mockResult,
+      });
+    });
+  });
+
+  describe('updateEmployee', () => {
+    it('should call employeesService.updateEmployee and return updated employee response payload', async () => {
+      const mockResult = {
+        id: 'user-uuid-1',
+        email: 'employee@example.com',
+        firstName: 'John Updated',
+        position: 'Senior Engineer',
+      };
+
+      employeesServiceMock.updateEmployee.mockResolvedValue(mockResult);
+
+      const payload = {
+        firstName: 'John Updated',
+        position: 'Senior Engineer',
+      };
+
+      const response = await employeesController.updateEmployee(
+        'user-uuid-1',
+        payload,
+      );
+
+      expect(employeesServiceMock.updateEmployee).toHaveBeenCalledWith(
+        'user-uuid-1',
+        payload,
+      );
+      expect(response).toEqual({
+        message: EMPLOYEE_CONSTANTS.UPDATE_SUCCESS_MESSAGE,
         data: mockResult,
       });
     });

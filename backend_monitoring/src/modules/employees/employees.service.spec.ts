@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { EmployeesService } from './employees.service.js';
 import { Gender, Role } from '../../generated/prisma/enums.js';
@@ -13,7 +13,9 @@ describe('EmployeesService', () => {
     prismaMock = {
       user: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
       },
     };
 
@@ -155,6 +157,167 @@ describe('EmployeesService', () => {
       expect((result as any).password).toBeUndefined();
       expect((result as any).refreshToken).toBeUndefined();
       expect(result.role).toBe(Role.EMPLOYEE);
+    });
+  });
+
+  describe('updateEmployee', () => {
+    it('should throw NotFoundException when employee does not exist', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        employeesService.updateEmployee('nonexistent-uuid', {
+          firstName: 'NewName',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'nonexistent-uuid' },
+      });
+      expect(prismaMock.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException when updating email to an existing one used by another user', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({
+        id: 'employee-1',
+        email: 'old@example.com',
+      });
+
+      prismaMock.user.findFirst.mockResolvedValue({
+        id: 'employee-2',
+        email: 'taken@example.com',
+      });
+
+      await expect(
+        employeesService.updateEmployee('employee-1', {
+          email: 'taken@example.com',
+        }),
+      ).rejects.toThrow(ConflictException);
+
+      expect(prismaMock.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          email: 'taken@example.com',
+          NOT: { id: 'employee-1' },
+        },
+      });
+      expect(prismaMock.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should not throw ConflictException when email is unchanged', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({
+        id: 'employee-1',
+        email: 'same@example.com',
+      });
+
+      const mockUpdatedRecord = {
+        id: 'employee-1',
+        email: 'same@example.com',
+        firstName: 'UpdatedFirst',
+      };
+      prismaMock.user.update.mockResolvedValue(mockUpdatedRecord);
+
+      const result = await employeesService.updateEmployee('employee-1', {
+        email: 'same@example.com',
+        firstName: 'UpdatedFirst',
+      });
+
+      expect(prismaMock.user.findFirst).not.toHaveBeenCalled();
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: 'employee-1' },
+        data: {
+          firstName: 'UpdatedFirst',
+        },
+      });
+      expect(result.firstName).toBe('UpdatedFirst');
+    });
+
+    it('should hash new password and invalidate active refresh token when password is provided', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({
+        id: 'employee-1',
+        email: 'emp@example.com',
+        refreshToken: 'old_active_refresh_token',
+      });
+
+      const mockUpdatedRecord = {
+        id: 'employee-1',
+        email: 'emp@example.com',
+        password: 'hashed_new_password',
+        refreshToken: null,
+      };
+      prismaMock.user.update.mockResolvedValue(mockUpdatedRecord);
+
+      const result = await employeesService.updateEmployee('employee-1', {
+        password: 'brandNewPassword123',
+      });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: 'employee-1' },
+        data: {
+          password: expect.any(String),
+          refreshToken: null,
+        },
+      });
+
+      const isPasswordUpdated = await bcrypt.compare(
+        'brandNewPassword123',
+        prismaMock.user.update.mock.calls[0][0].data.password,
+      );
+      expect(isPasswordUpdated).toBe(true);
+
+      expect((result as any).password).toBeUndefined();
+      expect((result as any).refreshToken).toBeUndefined();
+    });
+
+    it('should update metadata fields, dates, role, and salary, returning sanitized employee', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({
+        id: 'employee-1',
+        email: 'emp@example.com',
+      });
+
+      const mockUpdatedRecord = {
+        id: 'employee-1',
+        email: 'emp@example.com',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        position: 'Lead QA',
+        department: 'Quality Assurance',
+        dateOfBirth: new Date('1992-03-20T00:00:00.000Z'),
+        gender: Gender.FEMALE,
+        role: Role.HR_ADMIN,
+        salary: 22000000,
+        joinDate: new Date('2025-06-01T00:00:00.000Z'),
+      };
+      prismaMock.user.update.mockResolvedValue(mockUpdatedRecord);
+
+      const result = await employeesService.updateEmployee('employee-1', {
+        firstName: '  Jane ',
+        lastName: ' Doe ',
+        position: ' Lead QA ',
+        department: ' Quality Assurance ',
+        dateOfBirth: '1992-03-20T00:00:00.000Z',
+        gender: Gender.FEMALE,
+        role: Role.HR_ADMIN,
+        salary: 22000000,
+        joinDate: '2025-06-01T00:00:00.000Z',
+      });
+
+      expect(prismaMock.user.update).toHaveBeenCalledWith({
+        where: { id: 'employee-1' },
+        data: {
+          firstName: 'Jane',
+          lastName: 'Doe',
+          position: 'Lead QA',
+          department: 'Quality Assurance',
+          dateOfBirth: new Date('1992-03-20T00:00:00.000Z'),
+          gender: Gender.FEMALE,
+          role: Role.HR_ADMIN,
+          salary: 22000000,
+          joinDate: new Date('2025-06-01T00:00:00.000Z'),
+        },
+      });
+
+      expect(result.position).toBe('Lead QA');
+      expect(result.salary).toBe(22000000);
+      expect(result.role).toBe(Role.HR_ADMIN);
     });
   });
 });

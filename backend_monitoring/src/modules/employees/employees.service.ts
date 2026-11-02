@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AUTH_CONSTANTS } from '../auth/auth.constants.js';
@@ -7,6 +11,7 @@ import {
   EMPLOYEE_ERROR_MESSAGES,
 } from './employee.constants.js';
 import { CreateEmployeeDto } from './dto/create-employee.dto.js';
+import { UpdateEmployeeDto } from './dto/update-employee.dto.js';
 
 @Injectable()
 export class EmployeesService {
@@ -68,6 +73,83 @@ export class EmployeesService {
       refreshToken: _excludedRefreshToken,
       ...sanitizedEmployee
     } = createdUser;
+
+    return sanitizedEmployee;
+  }
+
+  async updateEmployee(
+    employeeId: string,
+    updateEmployeeDto: UpdateEmployeeDto,
+  ) {
+    const existingEmployee = await this.prisma.user.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!existingEmployee) {
+      throw new NotFoundException(EMPLOYEE_ERROR_MESSAGES.EMPLOYEE_NOT_FOUND);
+    }
+
+    const updateData: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(updateEmployeeDto)) {
+      if (value === undefined) continue;
+
+      if (key === 'email') {
+        const normalizedEmail = (value as string).trim().toLowerCase();
+
+        if (normalizedEmail === existingEmployee.email) continue;
+
+        const existingUserWithEmail = await this.prisma.user.findFirst({
+          where: {
+            email: normalizedEmail,
+            NOT: { id: employeeId },
+          },
+        });
+
+        if (existingUserWithEmail) {
+          throw new ConflictException(
+            EMPLOYEE_ERROR_MESSAGES.EMAIL_ALREADY_EXISTS,
+          );
+        }
+
+        updateData.email = normalizedEmail;
+        continue;
+      }
+
+      if (key === 'password') {
+        const hashedPassword = await bcrypt.hash(
+          value as string,
+          AUTH_CONSTANTS.BCRYPT_SALT_ROUNDS,
+        );
+
+        updateData.refreshToken = null;
+        updateData.password = hashedPassword;
+        continue;
+      }
+
+      if (key === 'dateOfBirth' || key === 'joinDate') {
+        updateData[key] = value ? new Date(value as string) : null;
+        continue;
+      }
+
+      if (typeof value === 'string') {
+        updateData[key] = value.trim() || null;
+        continue;
+      }
+
+      updateData[key] = value;
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: employeeId },
+      data: updateData,
+    });
+
+    const {
+      password: _excludedPassword,
+      refreshToken: _excludedRefreshToken,
+      ...sanitizedEmployee
+    } = updatedUser;
 
     return sanitizedEmployee;
   }

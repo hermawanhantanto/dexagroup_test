@@ -4,10 +4,12 @@ export const EMPLOYEE_CONSTANTS = {
   ROUTE: 'employees',
   DEFAULT_ROLE: Role.EMPLOYEE,
   CREATE_SUCCESS_MESSAGE: 'Employee created successfully',
+  UPDATE_SUCCESS_MESSAGE: 'Employee updated successfully',
 } as const;
 
 export const EMPLOYEE_ERROR_MESSAGES = {
   EMAIL_ALREADY_EXISTS: 'An employee with this email already exists',
+  EMPLOYEE_NOT_FOUND: 'Employee not found',
 } as const;
 
 export const EMPLOYEE_VALIDATION_MESSAGES = {
