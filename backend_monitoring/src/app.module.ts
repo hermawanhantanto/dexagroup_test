@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { EmployeesModule } from './modules/employees/employees.module.js';
 import { AttendanceModule } from './modules/attendance/attendance.module.js';
+import { HolidaysModule } from './modules/holidays/holidays.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AttendanceModule } from './modules/attendance/attendance.module.js';
     AuthModule,
     EmployeesModule,
     AttendanceModule,
+    HolidaysModule,
   ],
   controllers: [],
   providers: [
