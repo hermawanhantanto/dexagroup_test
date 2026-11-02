@@ -12,6 +12,7 @@ import {
 } from './employee.constants.js';
 import { CreateEmployeeDto } from './dto/create-employee.dto.js';
 import { UpdateEmployeeDto } from './dto/update-employee.dto.js';
+import { GetEmployeesQueryDto } from './dto/get-employees-query.dto.js';
 
 @Injectable()
 export class EmployeesService {
@@ -170,5 +171,76 @@ export class EmployeesService {
     } = existingEmployee;
 
     return sanitizedEmployee;
+  }
+
+  async getAllEmployees(queryDto: GetEmployeesQueryDto) {
+    const targetPageNumber = queryDto.page ?? EMPLOYEE_CONSTANTS.DEFAULT_PAGE;
+    const recordsPerPageLimit =
+      queryDto.limit ?? EMPLOYEE_CONSTANTS.DEFAULT_LIMIT;
+    const skipOffset = (targetPageNumber - 1) * recordsPerPageLimit;
+
+    const whereClause: Record<string, unknown> = {};
+
+    if (queryDto.role) {
+      whereClause.role = queryDto.role;
+    }
+
+    if (queryDto.gender) {
+      whereClause.gender = queryDto.gender;
+    }
+
+    if (queryDto.search) {
+      const trimmedSearchQuery = queryDto.search.trim();
+      if (trimmedSearchQuery.length > 0) {
+        whereClause.OR = [
+          { firstName: { contains: trimmedSearchQuery } },
+          { lastName: { contains: trimmedSearchQuery } },
+          { position: { contains: trimmedSearchQuery } },
+          { department: { contains: trimmedSearchQuery } },
+        ];
+      }
+    }
+
+    const [employeeRecords, totalRecordCount] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        skip: skipOffset,
+        take: recordsPerPageLimit,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          position: true,
+          department: true,
+          dateOfBirth: true,
+          gender: true,
+          role: true,
+          salary: true,
+          joinDate: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      
+      this.prisma.user.count({
+        where: whereClause,
+      }),
+    ]);
+
+    const calculatedTotalPages = Math.ceil(
+      totalRecordCount / recordsPerPageLimit,
+    );
+
+    return {
+      data: employeeRecords,
+      pagination: {
+        totalRecords: totalRecordCount,
+        currentPage: targetPageNumber,
+        totalPages: calculatedTotalPages,
+        recordsPerPage: recordsPerPageLimit,
+      },
+    };
   }
 }

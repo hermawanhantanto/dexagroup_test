@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
@@ -16,6 +17,7 @@ import { EMPLOYEE_CONSTANTS } from './employee.constants.js';
 import { EmployeesService } from './employees.service.js';
 import { CreateEmployeeDto } from './dto/create-employee.dto.js';
 import { UpdateEmployeeDto } from './dto/update-employee.dto.js';
+import { GetEmployeesQueryDto } from './dto/get-employees-query.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller(EMPLOYEE_CONSTANTS.ROUTE)
@@ -31,6 +33,18 @@ export class EmployeesController {
     return {
       message: EMPLOYEE_CONSTANTS.CREATE_SUCCESS_MESSAGE,
       data: createdEmployee,
+    };
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getAllEmployees(@Query() queryDto: GetEmployeesQueryDto) {
+    const result = await this.employeesService.getAllEmployees(queryDto);
+
+    return {
+      message: EMPLOYEE_CONSTANTS.GET_ALL_EMPLOYEES_SUCCESS_MESSAGE,
+      data: result.data,
+      pagination: result.pagination,
     };
   }
 

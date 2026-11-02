@@ -6,6 +6,12 @@ export const EMPLOYEE_CONSTANTS = {
   CREATE_SUCCESS_MESSAGE: 'Employee created successfully',
   UPDATE_SUCCESS_MESSAGE: 'Employee updated successfully',
   GET_EMPLOYEE_SUCCESS_MESSAGE: 'Employee retrieved successfully',
+  GET_ALL_EMPLOYEES_SUCCESS_MESSAGE: 'Employees retrieved successfully',
+  DEFAULT_PAGE: 1,
+  MIN_PAGE: 1,
+  DEFAULT_LIMIT: 10,
+  MIN_LIMIT: 1,
+  MAX_LIMIT: 100,
 } as const;
 
 export const EMPLOYEE_ERROR_MESSAGES = {
@@ -30,6 +36,12 @@ export const EMPLOYEE_VALIDATION_MESSAGES = {
   SALARY_NUMBER: 'Salary must be a number',
   SALARY_MIN: 'Salary must be greater than or equal to 0',
   JOIN_DATE_INVALID: 'Join date must be a valid ISO 8601 date string',
+  PAGE_INT: 'Page must be an integer',
+  PAGE_MIN: 'Page must be at least 1',
+  LIMIT_INT: 'Limit must be an integer',
+  LIMIT_MIN: 'Limit must be at least 1',
+  LIMIT_MAX: 'Limit cannot exceed 100',
+  SEARCH_STRING: 'Search query must be a string',
 } as const;
 
 export const EMPLOYEE_VALIDATION_RULES = {

@@ -11,6 +11,7 @@ describe('EmployeesController', () => {
       createEmployee: vi.fn(),
       updateEmployee: vi.fn(),
       getEmployeeById: vi.fn(),
+      getAllEmployees: vi.fn(),
     };
     employeesController = new EmployeesController(employeesServiceMock);
   });
@@ -95,6 +96,40 @@ describe('EmployeesController', () => {
       expect(response).toEqual({
         message: EMPLOYEE_CONSTANTS.GET_EMPLOYEE_SUCCESS_MESSAGE,
         data: mockResult,
+      });
+    });
+  });
+
+  describe('getAllEmployees', () => {
+    it('should call employeesService.getAllEmployees and return paginated employees payload', async () => {
+      const mockResult = {
+        data: [
+          {
+            id: 'user-uuid-1',
+            email: 'employee@example.com',
+            firstName: 'John',
+          },
+        ],
+        pagination: {
+          totalRecords: 1,
+          currentPage: 1,
+          totalPages: 1,
+          recordsPerPage: 10,
+        },
+      };
+
+      employeesServiceMock.getAllEmployees.mockResolvedValue(mockResult);
+
+      const queryDto = { page: 1, limit: 10, search: 'John' };
+      const response = await employeesController.getAllEmployees(queryDto);
+
+      expect(employeesServiceMock.getAllEmployees).toHaveBeenCalledWith(
+        queryDto,
+      );
+      expect(response).toEqual({
+        message: EMPLOYEE_CONSTANTS.GET_ALL_EMPLOYEES_SUCCESS_MESSAGE,
+        data: mockResult.data,
+        pagination: mockResult.pagination,
       });
     });
   });

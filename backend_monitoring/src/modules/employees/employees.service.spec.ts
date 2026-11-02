@@ -14,9 +14,12 @@ describe('EmployeesService', () => {
       user: {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
+        findMany: vi.fn(),
+        count: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
       },
+      $transaction: vi.fn((operations) => Promise.all(operations)),
     };
 
     employeesService = new EmployeesService(prismaMock);
@@ -364,6 +367,135 @@ describe('EmployeesService', () => {
       expect(result.email).toBe('employee@example.com');
       expect((result as any).password).toBeUndefined();
       expect((result as any).refreshToken).toBeUndefined();
+    });
+  });
+
+  describe('getAllEmployees', () => {
+    it('should return paginated employees with default pagination and sorting', async () => {
+      const mockRecords = [
+        {
+          id: 'emp-1',
+          email: 'emp1@example.com',
+          firstName: 'Alice',
+          role: Role.EMPLOYEE,
+        },
+        {
+          id: 'emp-2',
+          email: 'emp2@example.com',
+          firstName: 'Bob',
+          role: Role.HR_ADMIN,
+        },
+      ];
+
+      prismaMock.user.findMany.mockResolvedValue(mockRecords);
+      prismaMock.user.count.mockResolvedValue(2);
+
+      const result = await employeesService.getAllEmployees({});
+
+      expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+        where: {},
+        orderBy: { createdAt: 'desc' },
+        skip: 0,
+        take: 10,
+        select: expect.objectContaining({
+          id: true,
+          email: true,
+          firstName: true,
+        }),
+      });
+
+      expect(result).toEqual({
+        data: mockRecords,
+        pagination: {
+          totalRecords: 2,
+          currentPage: 1,
+          totalPages: 1,
+          recordsPerPage: 10,
+        },
+      });
+    });
+
+    it('should apply role filter when role is specified', async () => {
+      prismaMock.user.findMany.mockResolvedValue([]);
+      prismaMock.user.count.mockResolvedValue(0);
+
+      await employeesService.getAllEmployees({ role: Role.HR_ADMIN });
+
+      expect(prismaMock.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { role: Role.HR_ADMIN },
+        }),
+      );
+    });
+
+    it('should apply gender filter when gender is specified', async () => {
+      prismaMock.user.findMany.mockResolvedValue([]);
+      prismaMock.user.count.mockResolvedValue(0);
+
+      await employeesService.getAllEmployees({ gender: Gender.FEMALE });
+
+      expect(prismaMock.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { gender: Gender.FEMALE },
+        }),
+      );
+    });
+
+    it('should search across firstName, lastName, position, and department', async () => {
+      prismaMock.user.findMany.mockResolvedValue([]);
+      prismaMock.user.count.mockResolvedValue(0);
+
+      await employeesService.getAllEmployees({ search: '  Engineering ' });
+
+      expect(prismaMock.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { firstName: { contains: 'Engineering' } },
+              { lastName: { contains: 'Engineering' } },
+              { position: { contains: 'Engineering' } },
+              { department: { contains: 'Engineering' } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('should ignore empty search query and not populate OR condition', async () => {
+      prismaMock.user.findMany.mockResolvedValue([]);
+      prismaMock.user.count.mockResolvedValue(0);
+
+      await employeesService.getAllEmployees({ search: '   ' });
+
+      expect(prismaMock.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {},
+        }),
+      );
+    });
+
+    it('should handle custom page and limit with correct offset and totalPages', async () => {
+      prismaMock.user.findMany.mockResolvedValue([]);
+      prismaMock.user.count.mockResolvedValue(25);
+
+      const result = await employeesService.getAllEmployees({
+        page: 2,
+        limit: 10,
+      });
+
+      expect(prismaMock.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 10,
+          take: 10,
+        }),
+      );
+
+      expect(result.pagination).toEqual({
+        totalRecords: 25,
+        currentPage: 2,
+        totalPages: 3,
+        recordsPerPage: 10,
+      });
     });
   });
 });
