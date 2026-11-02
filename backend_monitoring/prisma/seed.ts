@@ -5,7 +5,7 @@ import { PrismaClient, Role, Gender } from '../src/generated/prisma/client.js';
 import {
   SEED_CONFIG,
   SEED_ADMIN_USER,
-  SEED_EMPLOYEE_USER,
+  SEED_EMPLOYEES,
 } from './seed.constants.js';
 
 const connectionString =
@@ -18,11 +18,6 @@ const databaseClient = new PrismaClient({ adapter: databaseAdapter });
 async function seedDatabase(): Promise<void> {
   const hashedAdminPassword = await bcrypt.hash(
     SEED_ADMIN_USER.password,
-    SEED_CONFIG.BCRYPT_SALT_ROUNDS,
-  );
-
-  const hashedEmployeePassword = await bcrypt.hash(
-    SEED_EMPLOYEE_USER.password,
     SEED_CONFIG.BCRYPT_SALT_ROUNDS,
   );
 
@@ -55,40 +50,55 @@ async function seedDatabase(): Promise<void> {
     },
   });
 
-  const seededEmployeeUser = await databaseClient.user.upsert({
-    where: { email: SEED_EMPLOYEE_USER.email },
-    update: {
-      password: hashedEmployeePassword,
-      firstName: SEED_EMPLOYEE_USER.firstName,
-      lastName: SEED_EMPLOYEE_USER.lastName,
-      position: SEED_EMPLOYEE_USER.position,
-      department: SEED_EMPLOYEE_USER.department,
-      dateOfBirth: SEED_EMPLOYEE_USER.dateOfBirth,
-      gender: Gender.MALE,
-      role: Role.EMPLOYEE,
-      salary: SEED_EMPLOYEE_USER.salary,
-      joinDate: SEED_EMPLOYEE_USER.joinDate,
-    },
-    create: {
-      email: SEED_EMPLOYEE_USER.email,
-      password: hashedEmployeePassword,
-      firstName: SEED_EMPLOYEE_USER.firstName,
-      lastName: SEED_EMPLOYEE_USER.lastName,
-      position: SEED_EMPLOYEE_USER.position,
-      department: SEED_EMPLOYEE_USER.department,
-      dateOfBirth: SEED_EMPLOYEE_USER.dateOfBirth,
-      gender: Gender.MALE,
-      role: Role.EMPLOYEE,
-      salary: SEED_EMPLOYEE_USER.salary,
-      joinDate: SEED_EMPLOYEE_USER.joinDate,
-    },
-  });
-
-  console.log('Database seeded successfully:');
+  console.log('Database seeding started:');
   console.log(`- HR Admin: ${seededAdminUser.email} (${seededAdminUser.role})`);
-  console.log(
-    `- Employee: ${seededEmployeeUser.email} (${seededEmployeeUser.role})`,
-  );
+
+  for (const employeeData of SEED_EMPLOYEES) {
+    const rawPassword =
+      employeeData.password || SEED_CONFIG.DEFAULT_EMPLOYEE_PASSWORD;
+    const hashedPassword = await bcrypt.hash(
+      rawPassword,
+      SEED_CONFIG.BCRYPT_SALT_ROUNDS,
+    );
+
+    const employeeGender =
+      employeeData.gender === 'FEMALE' ? Gender.FEMALE : Gender.MALE;
+
+    const seededEmployeeRecord = await databaseClient.user.upsert({
+      where: { email: employeeData.email },
+      update: {
+        password: hashedPassword,
+        firstName: employeeData.firstName,
+        lastName: employeeData.lastName,
+        position: employeeData.position,
+        department: employeeData.department,
+        dateOfBirth: employeeData.dateOfBirth,
+        gender: employeeGender,
+        role: Role.EMPLOYEE,
+        salary: employeeData.salary,
+        joinDate: employeeData.joinDate,
+      },
+      create: {
+        email: employeeData.email,
+        password: hashedPassword,
+        firstName: employeeData.firstName,
+        lastName: employeeData.lastName,
+        position: employeeData.position,
+        department: employeeData.department,
+        dateOfBirth: employeeData.dateOfBirth,
+        gender: employeeGender,
+        role: Role.EMPLOYEE,
+        salary: employeeData.salary,
+        joinDate: employeeData.joinDate,
+      },
+    });
+
+    console.log(
+      `- Employee: ${seededEmployeeRecord.email} - ${seededEmployeeRecord.firstName} ${seededEmployeeRecord.lastName || ''} (${seededEmployeeRecord.position})`,
+    );
+  }
+
+  console.log(`Total employees seeded: ${SEED_EMPLOYEES.length}`);
 }
 
 async function runSeed(): Promise<void> {

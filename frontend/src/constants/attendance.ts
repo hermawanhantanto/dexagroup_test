@@ -1,0 +1,63 @@
+export const ATTENDANCE_ENDPOINTS = {
+  TODAY: "/attendance/today",
+  UPLOAD_URL: "/attendance/upload-url",
+  CHECK_IN: "/attendance/check-in",
+  CLOCK_OUT: "/attendance/clock-out",
+  MY_HISTORY: "/attendance/my-history",
+} as const
+
+export const ATTENDANCE_CONSTRAINTS = {
+  MAX_FILE_SIZE_BYTES: 5242880,
+  MAX_NOTES_LENGTH: 500,
+  ALLOWED_IMAGE_TYPES: ["image/jpeg", "image/png", "image/webp"] as const,
+  ACCEPTED_FILE_EXTENSIONS: ".jpg,.jpeg,.png,.webp",
+} as const
+
+export const ATTENDANCE_STATUS_LABELS = {
+  PRESENT: "Present",
+  SICK: "Sick",
+  LEAVE: "Leave",
+  ABSENT: "Absent",
+} as const
+
+export const ATTENDANCE_UI_MESSAGES = {
+  TITLE: "Employee Attendance",
+  SUBTITLE: "Manage daily check-in, check-out, and view attendance history.",
+  TODAY_SUMMARY_TITLE: "Today's Status",
+  CLOCK_IN_TITLE: "Submit Clock In",
+  CLOCK_IN_SUBTITLE: "Record your start time, provide daily notes, and upload selfie proof.",
+  CLOCK_OUT_TITLE: "Submit Clock Out",
+  CLOCK_OUT_SUBTITLE: "Record your finish time and review or update your end-of-day notes.",
+  DAY_COMPLETED_TITLE: "Day Completed",
+  DAY_COMPLETED_SUBTITLE: "You have completed your attendance for today. Great job!",
+  NOTES_LABEL: "Work Notes",
+  NOTES_PLACEHOLDER: "Describe your plan, tasks, or daily update...",
+  CLOCK_OUT_NOTES_LABEL: "End of Day Notes",
+  CLOCK_OUT_NOTES_PLACEHOLDER: "Review or append what you achieved today...",
+  PROOF_IMAGE_LABEL: "Selfie Proof",
+  PROOF_IMAGE_HELP: "Upload a clear photo as proof of presence (max 5MB, JPEG/PNG/WebP).",
+  SUBMIT_CLOCK_IN_BUTTON: "Clock In Now",
+  SUBMIT_CLOCK_OUT_BUTTON: "Clock Out Now",
+  SUBMITTING_BUTTON: "Submitting...",
+  UPLOADING_BUTTON: "Uploading Proof...",
+  CHOOSE_FILE_BUTTON: "Select Selfie Photo",
+  CHANGE_FILE_BUTTON: "Change Photo",
+  HISTORY_TITLE: "Personal Attendance History",
+  HISTORY_SUBTITLE: "A record of your previous daily submissions.",
+  NO_HISTORY_MESSAGE: "No attendance records found yet.",
+  CLOCK_IN_TIME_LABEL: "Clock In Time",
+  CLOCK_OUT_TIME_LABEL: "Clock Out Time",
+  DATE_LABEL: "Date",
+  STATUS_LABEL: "Status",
+  PROOF_LABEL: "Photo Proof",
+  ACTIONS_LABEL: "Actions",
+  VIEW_PHOTO: "View Photo",
+  FILE_SIZE_ERROR: "File size exceeds 5MB limit.",
+  FILE_TYPE_ERROR: "Only JPEG, PNG, and WebP images are allowed.",
+  FILE_REQUIRED_ERROR: "Please select a selfie photo proof before clocking in.",
+  UPLOAD_FAILED_ERROR: "Failed to upload image. Please verify storage configuration or network connection.",
+  NOT_RECORDED: "Not recorded yet",
+  PAGINATION_PREV: "Previous",
+  PAGINATION_NEXT: "Next",
+  PAGE_OF: "Page",
+} as const

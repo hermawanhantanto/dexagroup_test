@@ -2,13 +2,14 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { DEFAULT_STORAGE_BUCKET } from './storage.constants.js';
 
 @Injectable()
-export class StorageService {
+export class StorageService implements OnModuleInit {
   private readonly logger = new Logger(StorageService.name);
   private readonly supabaseClient: SupabaseClient | null = null;
   private readonly defaultStorageBucketName: string;
@@ -25,6 +26,32 @@ export class StorageService {
 
     if (supabaseUrl && supabaseServiceRoleKey) {
       this.supabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
+    }
+  }
+
+  async onModuleInit(): Promise<void> {
+    if (!this.supabaseClient) {
+      return;
+    }
+
+    try {
+      const { data: bucketData } = await this.supabaseClient.storage.getBucket(
+        this.defaultStorageBucketName,
+      );
+
+      if (bucketData && !bucketData.public) {
+        await this.supabaseClient.storage.updateBucket(
+          this.defaultStorageBucketName,
+          { public: true },
+        );
+        this.logger.log(
+          `Storage bucket '${this.defaultStorageBucketName}' configured as public`,
+        );
+      }
+    } catch (initializationError: unknown) {
+      this.logger.warn(
+        `Failed to verify bucket public access: ${(initializationError as Error).message}`,
+      );
     }
   }
 
