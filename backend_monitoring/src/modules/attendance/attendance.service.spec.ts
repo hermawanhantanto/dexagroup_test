@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AttendanceService } from './attendance.service.js';
 import { AttendanceStatus } from '../../generated/prisma/enums.js';
 
@@ -9,10 +13,14 @@ describe('AttendanceService', () => {
 
   beforeEach(() => {
     prismaMock = {
+      user: {
+        findUnique: vi.fn(),
+      },
       attendance: {
         findMany: vi.fn(),
         findUnique: vi.fn(),
         count: vi.fn(),
+        create: vi.fn(),
       },
       $transaction: vi.fn((operations) => Promise.all(operations)),
     };
@@ -276,6 +284,132 @@ describe('AttendanceService', () => {
       });
 
       expect(result).toEqual(mockAttendance);
+    });
+  });
+
+  describe('createAttendance', () => {
+    it('should throw NotFoundException when employee does not exist', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        attendanceService.createAttendance({
+          userId: 'nonexistent-user',
+          attendanceDate: '2026-11-02',
+          status: AttendanceStatus.SICK,
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'nonexistent-user' },
+      });
+      expect(prismaMock.attendance.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException when attendance record already exists for date', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1' });
+      prismaMock.attendance.findUnique.mockResolvedValue({
+        id: 'existing-attendance',
+      });
+
+      await expect(
+        attendanceService.createAttendance({
+          userId: 'user-1',
+          attendanceDate: '2026-11-02',
+          status: AttendanceStatus.LEAVE,
+        }),
+      ).rejects.toThrow(ConflictException);
+
+      expect(prismaMock.attendance.create).not.toHaveBeenCalled();
+    });
+
+    it('should create attendance record with normalized date, trimmed strings, and user details', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1' });
+      prismaMock.attendance.findUnique.mockResolvedValue(null);
+
+      const mockCreatedRecord = {
+        id: 'new-attendance-id',
+        userId: 'user-1',
+        attendanceDate: new Date('2026-11-02T00:00:00.000Z'),
+        status: AttendanceStatus.SICK,
+        notes: 'Doctor prescription attached',
+        proofImageUrl: 'https://example.com/mc.jpg',
+        user: {
+          id: 'user-1',
+          email: 'alice@example.com',
+          firstName: 'Alice',
+          role: 'EMPLOYEE',
+        },
+      };
+
+      prismaMock.attendance.create.mockResolvedValue(mockCreatedRecord);
+
+      const result = await attendanceService.createAttendance({
+        userId: 'user-1',
+        attendanceDate: '2026-11-02',
+        status: AttendanceStatus.SICK,
+        notes: '  Doctor prescription attached  ',
+        proofImageUrl: ' https://example.com/mc.jpg ',
+      });
+
+      expect(prismaMock.attendance.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'user-1',
+          attendanceDate: new Date(Date.UTC(2026, 10, 2)),
+          status: AttendanceStatus.SICK,
+          notes: 'Doctor prescription attached',
+          proofImageUrl: 'https://example.com/mc.jpg',
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              position: true,
+              department: true,
+              role: true,
+            },
+          },
+        },
+      });
+
+      expect(result).toEqual(mockCreatedRecord);
+    });
+
+    it('should set optional notes and proofImageUrl to null when not provided', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1' });
+      prismaMock.attendance.findUnique.mockResolvedValue(null);
+
+      const mockCreatedRecord = {
+        id: 'new-attendance-id',
+        userId: 'user-1',
+        attendanceDate: new Date(Date.UTC(2026, 10, 5)),
+        status: AttendanceStatus.LEAVE,
+        notes: null,
+        proofImageUrl: null,
+      };
+
+      prismaMock.attendance.create.mockResolvedValue(mockCreatedRecord);
+
+      const result = await attendanceService.createAttendance({
+        userId: 'user-1',
+        attendanceDate: '2026-11-05',
+        status: AttendanceStatus.LEAVE,
+      });
+
+      expect(prismaMock.attendance.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'user-1',
+          attendanceDate: new Date(Date.UTC(2026, 10, 5)),
+          status: AttendanceStatus.LEAVE,
+          notes: null,
+          proofImageUrl: null,
+        },
+        include: expect.any(Object),
+      });
+
+      expect(result.status).toBe(AttendanceStatus.LEAVE);
     });
   });
 });

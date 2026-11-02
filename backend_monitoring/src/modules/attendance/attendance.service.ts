@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import {
   ATTENDANCE_ERROR_MESSAGES,
 } from './attendance.constants.js';
 import { GetAttendancesQueryDto } from './dto/get-attendances-query.dto.js';
+import { CreateAttendanceDto } from './dto/create-attendance.dto.js';
 
 @Injectable()
 export class AttendanceService {
@@ -129,5 +131,68 @@ export class AttendanceService {
     }
 
     return existingAttendance;
+  }
+
+  async createAttendance(createAttendanceDto: CreateAttendanceDto) {
+    const existingEmployee = await this.prisma.user.findUnique({
+      where: { id: createAttendanceDto.userId },
+    });
+
+    if (!existingEmployee) {
+      throw new NotFoundException(ATTENDANCE_ERROR_MESSAGES.EMPLOYEE_NOT_FOUND);
+    }
+
+    const rawAttendanceDate = new Date(createAttendanceDto.attendanceDate);
+    const normalizedAttendanceDate = new Date(
+      Date.UTC(
+        rawAttendanceDate.getUTCFullYear(),
+        rawAttendanceDate.getUTCMonth(),
+        rawAttendanceDate.getUTCDate(),
+      ),
+    );
+
+    const existingAttendanceRecord = await this.prisma.attendance.findUnique({
+      where: {
+        unique_user_attendance_per_date: {
+          userId: createAttendanceDto.userId,
+          attendanceDate: normalizedAttendanceDate,
+        },
+      },
+    });
+
+    if (existingAttendanceRecord) {
+      throw new ConflictException(
+        ATTENDANCE_ERROR_MESSAGES.ATTENDANCE_ALREADY_EXISTS,
+      );
+    }
+
+    const createdAttendance = await this.prisma.attendance.create({
+      data: {
+        userId: createAttendanceDto.userId,
+        attendanceDate: normalizedAttendanceDate,
+        status: createAttendanceDto.status,
+        notes: createAttendanceDto.notes
+          ? createAttendanceDto.notes.trim()
+          : null,
+        proofImageUrl: createAttendanceDto.proofImageUrl
+          ? createAttendanceDto.proofImageUrl.trim()
+          : null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            department: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return createdAttendance;
   }
 }

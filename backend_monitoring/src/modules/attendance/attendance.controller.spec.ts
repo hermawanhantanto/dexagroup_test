@@ -10,6 +10,7 @@ describe('AttendanceController', () => {
     attendanceServiceMock = {
       getAllAttendances: vi.fn(),
       getAttendanceById: vi.fn(),
+      createAttendance: vi.fn(),
     };
     attendanceController = new AttendanceController(attendanceServiceMock);
   });
@@ -67,6 +68,35 @@ describe('AttendanceController', () => {
       );
       expect(response).toEqual({
         message: ATTENDANCE_CONSTANTS.GET_ATTENDANCE_SUCCESS_MESSAGE,
+        data: mockResult,
+      });
+    });
+  });
+
+  describe('createAttendance', () => {
+    it('should call attendanceService.createAttendance and return created attendance payload', async () => {
+      const mockResult = {
+        id: 'new-attendance-1',
+        userId: 'user-1',
+        status: 'SICK',
+      };
+
+      attendanceServiceMock.createAttendance.mockResolvedValue(mockResult);
+
+      const payload = {
+        userId: 'user-1',
+        attendanceDate: '2026-11-02',
+        status: 'SICK' as any,
+        notes: 'Under the weather',
+      };
+
+      const response = await attendanceController.createAttendance(payload);
+
+      expect(attendanceServiceMock.createAttendance).toHaveBeenCalledWith(
+        payload,
+      );
+      expect(response).toEqual({
+        message: ATTENDANCE_CONSTANTS.CREATE_ATTENDANCE_SUCCESS_MESSAGE,
         data: mockResult,
       });
     });
