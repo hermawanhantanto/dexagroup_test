@@ -8,7 +8,26 @@ export const ATTENDANCE_CONSTANTS = {
   GET_ALL_ATTENDANCES_SUCCESS_MESSAGE: 'Attendances retrieved successfully',
   GET_ATTENDANCE_SUCCESS_MESSAGE: 'Attendance details retrieved successfully',
   CREATE_ATTENDANCE_SUCCESS_MESSAGE: 'Attendance recorded successfully',
+  CREATE_UPLOAD_URL_SUCCESS_MESSAGE: 'Upload URL generated successfully',
 } as const;
+
+export const ALLOWED_PHOTO_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+] as const;
+
+export type AllowedPhotoMimeType = (typeof ALLOWED_PHOTO_MIME_TYPES)[number];
+
+export const MIME_TO_EXTENSION_MAP: Record<AllowedPhotoMimeType, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+};
+
+export const MAX_PHOTO_FILE_SIZE = 5242880;
+export const MIN_PHOTO_FILE_SIZE = 1;
+export const DEFAULT_UPLOAD_URL_EXPIRATION_SECONDS = 120;
 
 export const ATTENDANCE_ERROR_MESSAGES = {
   INVALID_DATE_RANGE: 'Start date cannot be after end date',
@@ -36,4 +55,8 @@ export const ATTENDANCE_VALIDATION_MESSAGES = {
   STATUS_SICK_OR_LEAVE: 'Status must be either SICK or LEAVE',
   NOTES_STRING: 'Notes must be a string',
   PROOF_IMAGE_URL_STRING: 'Proof image URL must be a string',
+  MIME_TYPE_INVALID: 'MIME type must be image/jpeg, image/png, or image/webp',
+  FILE_SIZE_INT: 'File size must be an integer',
+  FILE_SIZE_MIN: 'File size must be at least 1 byte',
+  FILE_SIZE_MAX: 'File size cannot exceed 5MB',
 } as const;

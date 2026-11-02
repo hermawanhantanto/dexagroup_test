@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -5,16 +6,23 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { StorageService } from '../../storage/storage.service.js';
 import {
   ATTENDANCE_CONSTANTS,
   ATTENDANCE_ERROR_MESSAGES,
+  DEFAULT_UPLOAD_URL_EXPIRATION_SECONDS,
+  MIME_TO_EXTENSION_MAP,
 } from './attendance.constants.js';
 import { GetAttendancesQueryDto } from './dto/get-attendances-query.dto.js';
 import { CreateAttendanceDto } from './dto/create-attendance.dto.js';
+import { CreateUploadUrlDto } from './dto/create-upload-url.dto.js';
 
 @Injectable()
 export class AttendanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
   async getAllAttendances(queryDto: GetAttendancesQueryDto) {
     if (
@@ -194,5 +202,38 @@ export class AttendanceService {
     });
 
     return createdAttendance;
+  }
+
+  async createUploadUrl(
+    currentAdminId: string,
+    createUploadUrlDto: CreateUploadUrlDto,
+  ) {
+    const targetUserId = createUploadUrlDto.userId || currentAdminId;
+
+    if (createUploadUrlDto.userId) {
+      const existingEmployee = await this.prisma.user.findUnique({
+        where: { id: createUploadUrlDto.userId },
+      });
+
+      if (!existingEmployee) {
+        throw new NotFoundException(
+          ATTENDANCE_ERROR_MESSAGES.EMPLOYEE_NOT_FOUND,
+        );
+      }
+    }
+
+    const currentCalendarDate = new Date();
+    const formattedDateString = currentCalendarDate.toISOString().slice(0, 10);
+    const uniqueFileIdentifier = randomUUID();
+    const fileExtension = MIME_TO_EXTENSION_MAP[createUploadUrlDto.mimeType];
+    const storageFilePath = `proofs/${targetUserId}/${formattedDateString}_${uniqueFileIdentifier}${fileExtension}`;
+
+    const uploadCredentials =
+      await this.storageService.generateSignedUploadUrl(storageFilePath);
+
+    return {
+      ...uploadCredentials,
+      expiresIn: DEFAULT_UPLOAD_URL_EXPIRATION_SECONDS,
+    };
   }
 }

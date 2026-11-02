@@ -10,16 +10,38 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
+import {
+  JwtAuthGuard,
+  type AuthenticatedUser,
+} from '../../common/guards/jwt-auth.guard.js';
+import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { ATTENDANCE_CONSTANTS } from './attendance.constants.js';
 import { AttendanceService } from './attendance.service.js';
 import { GetAttendancesQueryDto } from './dto/get-attendances-query.dto.js';
 import { CreateAttendanceDto } from './dto/create-attendance.dto.js';
+import { CreateUploadUrlDto } from './dto/create-upload-url.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller([ATTENDANCE_CONSTANTS.ROUTE, 'attendance'])
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
+
+  @Post('upload-url')
+  @HttpCode(HttpStatus.OK)
+  async createUploadUrl(
+    @CurrentUser() authenticatedUser: AuthenticatedUser,
+    @Body() createUploadUrlDto: CreateUploadUrlDto,
+  ) {
+    const uploadCredentials = await this.attendanceService.createUploadUrl(
+      authenticatedUser.sub,
+      createUploadUrlDto,
+    );
+
+    return {
+      message: ATTENDANCE_CONSTANTS.CREATE_UPLOAD_URL_SUCCESS_MESSAGE,
+      data: uploadCredentials,
+    };
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

@@ -10,6 +10,7 @@ import { AttendanceStatus } from '../../generated/prisma/enums.js';
 describe('AttendanceService', () => {
   let attendanceService: AttendanceService;
   let prismaMock: any;
+  let storageServiceMock: any;
 
   beforeEach(() => {
     prismaMock = {
@@ -25,7 +26,11 @@ describe('AttendanceService', () => {
       $transaction: vi.fn((operations) => Promise.all(operations)),
     };
 
-    attendanceService = new AttendanceService(prismaMock);
+    storageServiceMock = {
+      generateSignedUploadUrl: vi.fn(),
+    };
+
+    attendanceService = new AttendanceService(prismaMock, storageServiceMock);
   });
 
   describe('getAllAttendances', () => {
@@ -410,6 +415,78 @@ describe('AttendanceService', () => {
       });
 
       expect(result.status).toBe(AttendanceStatus.LEAVE);
+    });
+  });
+
+  describe('createUploadUrl', () => {
+    it('should throw NotFoundException when userId is provided but employee does not exist', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        attendanceService.createUploadUrl('admin-uuid', {
+          mimeType: 'image/jpeg',
+          userId: 'non-existent-user-uuid',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'non-existent-user-uuid' },
+      });
+      expect(storageServiceMock.generateSignedUploadUrl).not.toHaveBeenCalled();
+    });
+
+    it('should generate signed upload URL with employee userId when provided and employee exists', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({ id: 'employee-uuid' });
+      storageServiceMock.generateSignedUploadUrl.mockResolvedValue({
+        uploadUrl: 'https://example.supabase.co/upload/sign',
+        publicUrl: 'https://example.supabase.co/public/proof.jpg',
+        filePath: 'proofs/employee-uuid/2026-11-02_uuid.jpg',
+        token: 'signed-token',
+      });
+
+      const result = await attendanceService.createUploadUrl('admin-uuid', {
+        mimeType: 'image/jpeg',
+        userId: 'employee-uuid',
+      });
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'employee-uuid' },
+      });
+      expect(storageServiceMock.generateSignedUploadUrl).toHaveBeenCalledWith(
+        expect.stringMatching(/^proofs\/employee-uuid\/.*\.jpg$/),
+      );
+      expect(result).toEqual({
+        uploadUrl: 'https://example.supabase.co/upload/sign',
+        publicUrl: 'https://example.supabase.co/public/proof.jpg',
+        filePath: 'proofs/employee-uuid/2026-11-02_uuid.jpg',
+        token: 'signed-token',
+        expiresIn: 120,
+      });
+    });
+
+    it('should generate signed upload URL with adminId when userId is omitted', async () => {
+      storageServiceMock.generateSignedUploadUrl.mockResolvedValue({
+        uploadUrl: 'https://example.supabase.co/upload/sign',
+        publicUrl: 'https://example.supabase.co/public/proof.png',
+        filePath: 'proofs/admin-uuid/2026-11-02_uuid.png',
+        token: 'signed-token',
+      });
+
+      const result = await attendanceService.createUploadUrl('admin-uuid', {
+        mimeType: 'image/png',
+      });
+
+      expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+      expect(storageServiceMock.generateSignedUploadUrl).toHaveBeenCalledWith(
+        expect.stringMatching(/^proofs\/admin-uuid\/.*\.png$/),
+      );
+      expect(result).toEqual({
+        uploadUrl: 'https://example.supabase.co/upload/sign',
+        publicUrl: 'https://example.supabase.co/public/proof.png',
+        filePath: 'proofs/admin-uuid/2026-11-02_uuid.png',
+        token: 'signed-token',
+        expiresIn: 120,
+      });
     });
   });
 });

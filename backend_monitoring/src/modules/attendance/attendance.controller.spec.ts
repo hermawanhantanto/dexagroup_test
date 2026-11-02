@@ -11,6 +11,7 @@ describe('AttendanceController', () => {
       getAllAttendances: vi.fn(),
       getAttendanceById: vi.fn(),
       createAttendance: vi.fn(),
+      createUploadUrl: vi.fn(),
     };
     attendanceController = new AttendanceController(attendanceServiceMock);
   });
@@ -97,6 +98,45 @@ describe('AttendanceController', () => {
       );
       expect(response).toEqual({
         message: ATTENDANCE_CONSTANTS.CREATE_ATTENDANCE_SUCCESS_MESSAGE,
+        data: mockResult,
+      });
+    });
+  });
+
+  describe('createUploadUrl', () => {
+    it('should call attendanceService.createUploadUrl and return upload credentials response payload', async () => {
+      const mockResult = {
+        uploadUrl: 'https://example.supabase.co/upload/sign',
+        publicUrl: 'https://example.supabase.co/public/proof.jpg',
+        filePath: 'proofs/user-1/2026-11-02_uuid.jpg',
+        token: 'signed-token',
+        expiresIn: 120,
+      };
+
+      attendanceServiceMock.createUploadUrl.mockResolvedValue(mockResult);
+
+      const authenticatedUser = {
+        sub: 'admin-1',
+        email: 'admin@example.com',
+        role: 'HR_ADMIN' as any,
+      };
+
+      const payload = {
+        mimeType: 'image/jpeg' as any,
+        userId: 'user-1',
+      };
+
+      const response = await attendanceController.createUploadUrl(
+        authenticatedUser,
+        payload,
+      );
+
+      expect(attendanceServiceMock.createUploadUrl).toHaveBeenCalledWith(
+        'admin-1',
+        payload,
+      );
+      expect(response).toEqual({
+        message: ATTENDANCE_CONSTANTS.CREATE_UPLOAD_URL_SUCCESS_MESSAGE,
         data: mockResult,
       });
     });
