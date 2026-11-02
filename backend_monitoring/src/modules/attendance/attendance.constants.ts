@@ -6,10 +6,12 @@ export const ATTENDANCE_CONSTANTS = {
   MIN_LIMIT: 1,
   MAX_LIMIT: 100,
   GET_ALL_ATTENDANCES_SUCCESS_MESSAGE: 'Attendances retrieved successfully',
+  GET_ATTENDANCE_SUCCESS_MESSAGE: 'Attendance details retrieved successfully',
 } as const;
 
 export const ATTENDANCE_ERROR_MESSAGES = {
   INVALID_DATE_RANGE: 'Start date cannot be after end date',
+  ATTENDANCE_NOT_FOUND: 'Attendance record not found',
 } as const;
 
 export const ATTENDANCE_VALIDATION_MESSAGES = {

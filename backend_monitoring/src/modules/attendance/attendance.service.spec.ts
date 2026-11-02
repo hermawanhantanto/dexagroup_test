@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AttendanceService } from './attendance.service.js';
 import { AttendanceStatus } from '../../generated/prisma/enums.js';
 
@@ -11,6 +11,7 @@ describe('AttendanceService', () => {
     prismaMock = {
       attendance: {
         findMany: vi.fn(),
+        findUnique: vi.fn(),
         count: vi.fn(),
       },
       $transaction: vi.fn((operations) => Promise.all(operations)),
@@ -202,6 +203,79 @@ describe('AttendanceService', () => {
         hasNextPage: true,
         hasPreviousPage: true,
       });
+    });
+  });
+
+  describe('getAttendanceById', () => {
+    it('should throw NotFoundException when attendance record is not found', async () => {
+      prismaMock.attendance.findUnique.mockResolvedValue(null);
+
+      await expect(
+        attendanceService.getAttendanceById('nonexistent-uuid'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prismaMock.attendance.findUnique).toHaveBeenCalledWith({
+        where: { id: 'nonexistent-uuid' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              position: true,
+              department: true,
+              role: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should return attendance details with user information when found', async () => {
+      const mockAttendance = {
+        id: 'attendance-123',
+        userId: 'user-123',
+        attendanceDate: new Date('2026-11-02'),
+        clockInAt: new Date('2026-11-02T08:00:00.000Z'),
+        clockOutAt: new Date('2026-11-02T17:00:00.000Z'),
+        proofImageUrl: 'https://storage.example.com/proofs/123.jpg',
+        notes: 'Working from home',
+        status: AttendanceStatus.PRESENT,
+        user: {
+          id: 'user-123',
+          email: 'john@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          position: 'Software Engineer',
+          department: 'Engineering',
+          role: 'EMPLOYEE',
+        },
+      };
+
+      prismaMock.attendance.findUnique.mockResolvedValue(mockAttendance);
+
+      const result =
+        await attendanceService.getAttendanceById('attendance-123');
+
+      expect(prismaMock.attendance.findUnique).toHaveBeenCalledWith({
+        where: { id: 'attendance-123' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              position: true,
+              department: true,
+              role: true,
+            },
+          },
+        },
+      });
+
+      expect(result).toEqual(mockAttendance);
     });
   });
 });

@@ -3,6 +3,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -27,4 +29,19 @@ export class AttendanceController {
       pagination: result.pagination,
     };
   }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  async getAttendanceById(
+    @Param('id', new ParseUUIDPipe()) attendanceId: string,
+  ) {
+    const attendance =
+      await this.attendanceService.getAttendanceById(attendanceId);
+
+    return {
+      message: ATTENDANCE_CONSTANTS.GET_ATTENDANCE_SUCCESS_MESSAGE,
+      data: attendance,
+    };
+  }
 }
+

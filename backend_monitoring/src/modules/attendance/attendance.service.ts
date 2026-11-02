@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import {
   ATTENDANCE_CONSTANTS,
@@ -98,5 +102,32 @@ export class AttendanceService {
         hasPreviousPage: targetPageNumber > 1,
       },
     };
+  }
+
+  async getAttendanceById(attendanceId: string) {
+    const existingAttendance = await this.prisma.attendance.findUnique({
+      where: { id: attendanceId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            department: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!existingAttendance) {
+      throw new NotFoundException(
+        ATTENDANCE_ERROR_MESSAGES.ATTENDANCE_NOT_FOUND,
+      );
+    }
+
+    return existingAttendance;
   }
 }

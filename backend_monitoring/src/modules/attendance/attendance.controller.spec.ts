@@ -9,6 +9,7 @@ describe('AttendanceController', () => {
   beforeEach(() => {
     attendanceServiceMock = {
       getAllAttendances: vi.fn(),
+      getAttendanceById: vi.fn(),
     };
     attendanceController = new AttendanceController(attendanceServiceMock);
   });
@@ -44,6 +45,29 @@ describe('AttendanceController', () => {
         message: ATTENDANCE_CONSTANTS.GET_ALL_ATTENDANCES_SUCCESS_MESSAGE,
         data: mockResult.data,
         pagination: mockResult.pagination,
+      });
+    });
+  });
+
+  describe('getAttendanceById', () => {
+    it('should call attendanceService.getAttendanceById and return attendance response payload', async () => {
+      const mockResult = {
+        id: 'attendance-1',
+        status: 'PRESENT',
+        clockInAt: '2026-11-02T08:00:00.000Z',
+      };
+
+      attendanceServiceMock.getAttendanceById.mockResolvedValue(mockResult);
+
+      const response =
+        await attendanceController.getAttendanceById('attendance-1');
+
+      expect(attendanceServiceMock.getAttendanceById).toHaveBeenCalledWith(
+        'attendance-1',
+      );
+      expect(response).toEqual({
+        message: ATTENDANCE_CONSTANTS.GET_ATTENDANCE_SUCCESS_MESSAGE,
+        data: mockResult,
       });
     });
   });
