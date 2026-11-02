@@ -224,3 +224,96 @@ export const MONITORING_HEADER_TEXTS = {
   DEPARTMENT_FILTER_ALL: "ALL",
 } as const
 
+export const MONITORING_ATTENDANCE_TABLE_HEADERS = {
+  EMPLOYEE: "Employee",
+  DATE: "Date",
+  STATUS: "Status",
+  CLOCK_IN: "Clock In",
+  CLOCK_OUT: "Clock Out",
+  NOTES: "Notes",
+  PROOF: "Photo Proof",
+} as const
+
+export const MONITORING_ATTENDANCE_FILTER_LABELS = {
+  TABLE_TITLE: "Workforce Attendance Monitoring",
+  TABLE_SUBTITLE: "Real-time employee attendance tracking, timestamps, and verification photo proof.",
+  START_DATE: "Start Date",
+  END_DATE: "End Date",
+  STATUS: "Status",
+  STATUS_ALL: "All Statuses",
+  SEARCH_PLACEHOLDER: "Search employee name or email...",
+  CLEAR_FILTERS: "Clear Filters",
+  NO_RECORDS_FOUND: "No attendance records found matching the specified filters.",
+  NO_RECORDS_YET: "No attendance records registered yet.",
+  VIEW_PHOTO: "View Proof",
+  NO_PHOTO: "No Photo",
+  INVALID_DATE_RANGE: "Start date cannot be after end date.",
+  TABLE_COLUMN_COUNT: 7,
+} as const
+
+export const MONITORING_ATTENDANCE_STATUS_OPTIONS = [
+  { label: "All Statuses", value: "ALL" },
+  { label: "Present", value: "PRESENT" },
+  { label: "Sick", value: "SICK" },
+  { label: "Leave", value: "LEAVE" },
+  { label: "Absent", value: "ABSENT" },
+] as const
+
+export const MONITORING_PROOF_MODAL_TEXTS = {
+  TITLE: "Attendance Proof Inspection",
+  SUBTITLE: "Review submitted verification selfie and attendance details.",
+  EMPLOYEE: "Employee",
+  DEPARTMENT: "Department",
+  ATTENDANCE_DATE: "Attendance Date",
+  CLOCK_IN: "Clock In",
+  CLOCK_OUT: "Clock Out",
+  NOTES: "Submitted Notes",
+  STATUS: "Status",
+  CLOSE: "Close",
+  IMAGE_ALT: "Attendance verification selfie",
+  OPEN_FULL: "Open Full Image",
+} as const
+
+export const MONITORING_HOLIDAY_HEADERS = {
+  DATE: "Holiday Date",
+  NAME: "Holiday Name",
+  DESCRIPTION: "Description",
+  ACTIONS: "Actions",
+} as const
+
+export const MONITORING_HOLIDAY_DIALOG_TEXTS = {
+  TABLE_TITLE: "Company Holiday Management",
+  TABLE_SUBTITLE: "Official national holidays and corporate work-free dates.",
+  ADD_TITLE: "Add Company Holiday",
+  ADD_SUBTITLE: "Designate official holidays and non-working days for the organization.",
+  DELETE_TITLE: "Delete Company Holiday",
+  DELETE_SUBTITLE: "Are you sure you want to remove this holiday? This will restore standard attendance expectations.",
+  DELETE_CONFIRM: "Yes, Delete Holiday",
+  CREATE_BUTTON: "Add Holiday",
+  FIELD_DATE: "Holiday Date",
+  FIELD_NAME: "Holiday Name",
+  FIELD_NAME_PLACEHOLDER: "e.g., Independence Day, Eid al-Fitr",
+  FIELD_DESC: "Description (Optional)",
+  FIELD_DESC_PLACEHOLDER: "e.g., National public holiday observation",
+  DATE_REQUIRED: "Holiday date is required.",
+  NAME_REQUIRED: "Holiday name is required.",
+  CONFLICT_ERROR: "A holiday on this date already exists.",
+  CREATE_SUCCESS: "Holiday added successfully.",
+  DELETE_SUCCESS: "Holiday deleted successfully.",
+  FETCH_ERROR: "Failed to load company holidays.",
+  NO_HOLIDAYS_FOUND: "No holidays scheduled for the organization.",
+  CLEAR_FILTERS: "Clear Filters",
+} as const
+
+export const MONITORING_DASHBOARD_TEXTS = {
+  TAB_EMPLOYEES: "Employees",
+  TAB_ATTENDANCE: "Workforce Attendance",
+  TAB_HOLIDAYS: "Company Holidays",
+  KPI_TOTAL_EMPLOYEES: "Total Workforce",
+  KPI_TODAY_PRESENT: "Present Today",
+  KPI_UPCOMING_HOLIDAYS: "Upcoming Holidays",
+  SIGN_OUT: "Sign Out",
+  SEARCH_ANY: "Search...",
+} as const
+
+

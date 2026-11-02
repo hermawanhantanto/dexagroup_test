@@ -1,14 +1,26 @@
+import React from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { AUTH_LABELS } from "@/constants/auth"
-import { MONITORING_HEADER_TEXTS } from "@/constants/monitoring"
+import {
+  MONITORING_DASHBOARD_TEXTS,
+  MONITORING_HEADER_TEXTS,
+  MONITORING_TABS,
+} from "@/constants/monitoring"
 import { ROUTE_PATHS } from "@/constants/routes"
 import { useAuth } from "@/features/auth/hooks/use-auth"
 import { EmployeeTable } from "@/features/monitoring/components/EmployeeTable"
+import { AttendanceMonitoringTable } from "@/features/monitoring/components/AttendanceMonitoringTable"
+
+type MonitoringActiveTab =
+  (typeof MONITORING_TABS)[keyof typeof MONITORING_TABS]
 
 export function MonitoringPage() {
   const navigate = useNavigate()
   const { signOut, user } = useAuth()
+  const [activeTab, setActiveTab] = React.useState<MonitoringActiveTab>(
+    MONITORING_TABS.EMPLOYEES,
+  )
 
   const handleSignOut = async () => {
     await signOut()
@@ -36,10 +48,39 @@ export function MonitoringPage() {
             {AUTH_LABELS.SIGN_OUT_BUTTON}
           </Button>
         </div>
+
+        <div className="mx-auto max-w-6xl px-6 flex gap-6">
+          <button
+            type="button"
+            onClick={() => setActiveTab(MONITORING_TABS.EMPLOYEES)}
+            className={`pb-3 pt-2 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+              activeTab === MONITORING_TABS.EMPLOYEES
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {MONITORING_DASHBOARD_TEXTS.TAB_EMPLOYEES}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab(MONITORING_TABS.ATTENDANCE)}
+            className={`pb-3 pt-2 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+              activeTab === MONITORING_TABS.ATTENDANCE
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {MONITORING_DASHBOARD_TEXTS.TAB_ATTENDANCE}
+          </button>
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <EmployeeTable />
+        {activeTab === MONITORING_TABS.EMPLOYEES && <EmployeeTable />}
+        {activeTab === MONITORING_TABS.ATTENDANCE && (
+          <AttendanceMonitoringTable />
+        )}
       </main>
     </div>
   )
