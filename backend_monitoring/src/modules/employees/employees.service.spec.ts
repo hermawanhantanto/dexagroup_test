@@ -320,4 +320,50 @@ describe('EmployeesService', () => {
       expect(result.role).toBe(Role.HR_ADMIN);
     });
   });
+
+  describe('getEmployeeById', () => {
+    it('should throw NotFoundException when employee does not exist', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        employeesService.getEmployeeById('nonexistent-uuid'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'nonexistent-uuid' },
+      });
+    });
+
+    it('should return sanitized employee when employee exists', async () => {
+      const mockEmployee = {
+        id: 'employee-123',
+        email: 'employee@example.com',
+        password: 'hashed_password',
+        refreshToken: 'hashed_refresh_token',
+        firstName: 'John',
+        lastName: 'Doe',
+        position: 'Software Engineer',
+        department: 'Engineering',
+        dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
+        gender: Gender.MALE,
+        role: Role.EMPLOYEE,
+        salary: 10000000,
+        joinDate: new Date('2024-01-01T00:00:00.000Z'),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      prismaMock.user.findUnique.mockResolvedValue(mockEmployee);
+
+      const result = await employeesService.getEmployeeById('employee-123');
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'employee-123' },
+      });
+      expect(result.id).toBe('employee-123');
+      expect(result.email).toBe('employee@example.com');
+      expect((result as any).password).toBeUndefined();
+      expect((result as any).refreshToken).toBeUndefined();
+    });
+  });
 });

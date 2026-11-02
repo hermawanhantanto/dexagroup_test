@@ -10,6 +10,7 @@ describe('EmployeesController', () => {
     employeesServiceMock = {
       createEmployee: vi.fn(),
       updateEmployee: vi.fn(),
+      getEmployeeById: vi.fn(),
     };
     employeesController = new EmployeesController(employeesServiceMock);
   });
@@ -70,6 +71,29 @@ describe('EmployeesController', () => {
       );
       expect(response).toEqual({
         message: EMPLOYEE_CONSTANTS.UPDATE_SUCCESS_MESSAGE,
+        data: mockResult,
+      });
+    });
+  });
+
+  describe('getEmployeeById', () => {
+    it('should call employeesService.getEmployeeById and return employee response payload', async () => {
+      const mockResult = {
+        id: 'user-uuid-1',
+        email: 'employee@example.com',
+        firstName: 'John',
+        position: 'Engineer',
+      };
+
+      employeesServiceMock.getEmployeeById.mockResolvedValue(mockResult);
+
+      const response = await employeesController.getEmployeeById('user-uuid-1');
+
+      expect(employeesServiceMock.getEmployeeById).toHaveBeenCalledWith(
+        'user-uuid-1',
+      );
+      expect(response).toEqual({
+        message: EMPLOYEE_CONSTANTS.GET_EMPLOYEE_SUCCESS_MESSAGE,
         data: mockResult,
       });
     });

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -48,6 +49,18 @@ export class EmployeesController {
     return {
       message: EMPLOYEE_CONSTANTS.UPDATE_SUCCESS_MESSAGE,
       data: updatedEmployee,
+    };
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  async getEmployeeById(@Param('id', new ParseUUIDPipe()) employeeId: string) {
+    const retrievedEmployee =
+      await this.employeesService.getEmployeeById(employeeId);
+
+    return {
+      message: EMPLOYEE_CONSTANTS.GET_EMPLOYEE_SUCCESS_MESSAGE,
+      data: retrievedEmployee,
     };
   }
 }

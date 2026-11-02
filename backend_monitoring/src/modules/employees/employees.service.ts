@@ -153,4 +153,22 @@ export class EmployeesService {
 
     return sanitizedEmployee;
   }
+
+  async getEmployeeById(employeeId: string) {
+    const existingEmployee = await this.prisma.user.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!existingEmployee) {
+      throw new NotFoundException(EMPLOYEE_ERROR_MESSAGES.EMPLOYEE_NOT_FOUND);
+    }
+
+    const {
+      password: _excludedPassword,
+      refreshToken: _excludedRefreshToken,
+      ...sanitizedEmployee
+    } = existingEmployee;
+
+    return sanitizedEmployee;
+  }
 }
