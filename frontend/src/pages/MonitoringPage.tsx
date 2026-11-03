@@ -36,23 +36,23 @@ export function MonitoringPage() {
     MONITORING_HEADER_TEXTS.DEFAULT_AVATAR_INITIAL
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      <header className="border-b border-neutral-800 bg-neutral-900/80 backdrop-blur-md sticky top-0 z-40">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card sticky top-0 z-40 shadow-xs">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 font-bold">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary font-bold">
               {avatarInitial}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold tracking-tight text-white">
+                <h1 className="text-base font-bold tracking-tight text-foreground">
                   {AUTH_LABELS.MONITORING_TITLE}
                 </h1>
-                <span className="rounded px-1.5 py-0.5 text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="rounded px-1.5 py-0.5 text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
                   {MONITORING_ROLES.HR_ADMIN}
                 </span>
               </div>
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-muted-foreground">
                 {user?.email || MONITORING_HEADER_TEXTS.PORTAL_SUBTITLE}
               </p>
             </div>
@@ -62,7 +62,7 @@ export function MonitoringPage() {
             variant="outline"
             size="sm"
             onClick={handleSignOut}
-            className="cursor-pointer border-neutral-700 bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 hover:text-white"
+            className="cursor-pointer"
           >
             {AUTH_LABELS.SIGN_OUT_BUTTON}
           </Button>
@@ -74,8 +74,8 @@ export function MonitoringPage() {
             onClick={() => setActiveTab(MONITORING_TABS.EMPLOYEES)}
             className={`pb-3 pt-2 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === MONITORING_TABS.EMPLOYEES
-                ? "border-blue-500 text-white"
-                : "border-transparent text-neutral-400 hover:text-white"
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {MONITORING_DASHBOARD_TEXTS.TAB_EMPLOYEES}
@@ -86,8 +86,8 @@ export function MonitoringPage() {
             onClick={() => setActiveTab(MONITORING_TABS.ATTENDANCE)}
             className={`pb-3 pt-2 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === MONITORING_TABS.ATTENDANCE
-                ? "border-blue-500 text-white"
-                : "border-transparent text-neutral-400 hover:text-white"
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {MONITORING_DASHBOARD_TEXTS.TAB_ATTENDANCE}
@@ -98,8 +98,8 @@ export function MonitoringPage() {
             onClick={() => setActiveTab(MONITORING_TABS.HOLIDAYS)}
             className={`pb-3 pt-2 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === MONITORING_TABS.HOLIDAYS
-                ? "border-blue-500 text-white"
-                : "border-transparent text-neutral-400 hover:text-white"
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {MONITORING_DASHBOARD_TEXTS.TAB_HOLIDAYS}

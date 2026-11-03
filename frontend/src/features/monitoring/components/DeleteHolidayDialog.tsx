@@ -63,13 +63,17 @@ export function DeleteHolidayDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="delete-holiday-dialog-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
+      onClick={onClose}
     >
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-800 shadow-2xl p-6 space-y-5">
-        <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+      <div
+        className="relative w-full max-w-md overflow-hidden rounded-xl bg-card border border-destructive/20 shadow-2xl p-6 space-y-4"
+        onClick={(clickEvent) => clickEvent.stopPropagation()}
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 border border-destructive/20 text-destructive">
             <svg
-              className="h-6 w-6"
+              className="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -83,14 +87,14 @@ export function DeleteHolidayDialog({
             </svg>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             <h3
               id="delete-holiday-dialog-title"
-              className="text-lg font-bold text-white tracking-tight"
+              className="text-base font-bold text-foreground tracking-tight"
             >
               {MONITORING_HOLIDAY_DIALOG_TEXTS.DELETE_TITLE}
             </h3>
-            <p className="text-xs text-neutral-400 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               {MONITORING_HOLIDAY_DIALOG_TEXTS.DELETE_SUBTITLE}
             </p>
           </div>
@@ -99,7 +103,7 @@ export function DeleteHolidayDialog({
         {errorMessage && (
           <div
             role="alert"
-            className="flex items-center gap-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium"
+            className="flex items-center gap-2.5 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium"
           >
             <svg
               className="w-4 h-4 shrink-0"
@@ -118,19 +122,19 @@ export function DeleteHolidayDialog({
           </div>
         )}
 
-        <div className="rounded-xl bg-neutral-950 p-4 border border-neutral-800 space-y-2 text-sm">
+        <div className="rounded-lg bg-muted/40 p-3.5 border border-border space-y-2 text-xs">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-neutral-500 font-medium">Holiday</span>
-            <span className="font-semibold text-white">{holiday.name}</span>
+            <span className="text-xs text-muted-foreground font-medium">Holiday</span>
+            <span className="font-semibold text-foreground">{holiday.name}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-xs text-neutral-500 font-medium">Date</span>
-            <span className="text-neutral-300">{formattedDate}</span>
+            <span className="text-xs text-muted-foreground font-medium">Date</span>
+            <span className="text-foreground">{formattedDate}</span>
           </div>
           {holiday.description && (
             <div className="flex justify-between items-center">
-              <span className="text-xs text-neutral-500 font-medium">Details</span>
-              <span className="text-neutral-400 text-xs truncate max-w-xs">
+              <span className="text-xs text-muted-foreground font-medium">Details</span>
+              <span className="text-muted-foreground text-xs truncate max-w-xs">
                 {holiday.description}
               </span>
             </div>
@@ -142,7 +146,7 @@ export function DeleteHolidayDialog({
             type="button"
             onClick={onClose}
             disabled={deleteHolidayMutation.isPending}
-            className="px-4 py-2 text-sm font-semibold text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-xl transition-colors"
+            className="px-3.5 py-2 text-xs font-semibold text-secondary-foreground bg-secondary hover:bg-secondary/80 rounded-md transition-colors border border-border cursor-pointer"
           >
             {MONITORING_DIALOG_TEXTS.CANCEL}
           </button>
@@ -150,7 +154,7 @@ export function DeleteHolidayDialog({
             type="button"
             onClick={handleConfirmDelete}
             disabled={deleteHolidayMutation.isPending}
-            className="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 rounded-xl transition-colors shadow-lg shadow-rose-600/20"
+            className="px-4 py-2 text-xs font-semibold text-destructive-foreground bg-destructive hover:bg-destructive/90 disabled:opacity-50 rounded-md transition-colors shadow-xs cursor-pointer"
           >
             {deleteHolidayMutation.isPending
               ? MONITORING_DIALOG_TEXTS.DELETING

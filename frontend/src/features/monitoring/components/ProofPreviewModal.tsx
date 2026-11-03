@@ -63,25 +63,29 @@ export function ProofPreviewModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="proof-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
+      onClick={onClose}
     >
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-800 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-neutral-800 px-6 py-4">
+      <div
+        className="relative w-full max-w-lg overflow-hidden rounded-xl bg-card border border-border shadow-2xl"
+        onClick={(clickEvent) => clickEvent.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
             <h3
               id="proof-modal-title"
-              className="text-lg font-semibold text-white"
+              className="text-base font-bold text-foreground"
             >
               {MONITORING_PROOF_MODAL_TEXTS.TITLE}
             </h3>
-            <p className="text-xs text-neutral-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {MONITORING_PROOF_MODAL_TEXTS.SUBTITLE}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
           >
             <svg
               className="h-5 w-5"
@@ -99,8 +103,8 @@ export function ProofPreviewModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
-          <div className="flex items-center justify-center rounded-xl overflow-hidden bg-neutral-950 border border-neutral-800 aspect-video relative">
+        <div className="p-6 space-y-4">
+          <div className="flex items-center justify-center rounded-lg overflow-hidden bg-muted/40 border border-border aspect-video relative">
             {attendanceRecord.proofImageUrl && !imageLoadFailed ? (
               <img
                 src={attendanceRecord.proofImageUrl}
@@ -109,9 +113,9 @@ export function ProofPreviewModal({
                 onError={() => setImageLoadFailed(true)}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center text-neutral-500 p-6 text-center">
+              <div className="flex flex-col items-center justify-center text-muted-foreground p-6 text-center">
                 <svg
-                  className="w-12 h-12 mb-2 text-neutral-600"
+                  className="w-10 h-10 mb-2 text-muted-foreground/60"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -123,65 +127,65 @@ export function ProofPreviewModal({
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
-                <p className="text-sm font-medium">No photo proof available</p>
+                <p className="text-xs font-medium">No photo proof available</p>
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm bg-neutral-800/40 p-4 rounded-xl border border-neutral-800">
+          <div className="grid grid-cols-2 gap-3 text-xs bg-muted/30 p-4 rounded-lg border border-border">
             <div>
-              <span className="text-xs text-neutral-400 block font-medium">
+              <span className="text-xs text-muted-foreground block font-medium">
                 {MONITORING_PROOF_MODAL_TEXTS.EMPLOYEE}
               </span>
-              <p className="font-semibold text-white mt-0.5">
+              <p className="font-semibold text-foreground mt-0.5">
                 {employeeFullName}
               </p>
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-muted-foreground">
                 {attendanceRecord.user.email}
               </p>
             </div>
 
             <div>
-              <span className="text-xs text-neutral-400 block font-medium">
+              <span className="text-xs text-muted-foreground block font-medium">
                 {MONITORING_PROOF_MODAL_TEXTS.STATUS}
               </span>
-              <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
                 {attendanceRecord.status}
               </span>
             </div>
 
             <div>
-              <span className="text-xs text-neutral-400 block font-medium">
+              <span className="text-xs text-muted-foreground block font-medium">
                 {MONITORING_PROOF_MODAL_TEXTS.ATTENDANCE_DATE}
               </span>
-              <p className="text-neutral-200 mt-0.5">
+              <p className="text-foreground mt-0.5">
                 {formattedAttendanceDate}
               </p>
             </div>
 
             <div>
-              <span className="text-xs text-neutral-400 block font-medium">
+              <span className="text-xs text-muted-foreground block font-medium">
                 {MONITORING_PROOF_MODAL_TEXTS.CLOCK_IN}
               </span>
-              <p className="text-neutral-200 mt-0.5">
+              <p className="text-foreground mt-0.5">
                 {formattedClockInTime}
               </p>
             </div>
 
             <div>
-              <span className="text-xs text-neutral-400 block font-medium">
+              <span className="text-xs text-muted-foreground block font-medium">
                 {MONITORING_PROOF_MODAL_TEXTS.CLOCK_OUT}
               </span>
-              <p className="text-neutral-200 mt-0.5">
+              <p className="text-foreground mt-0.5">
                 {formattedClockOutTime}
               </p>
             </div>
 
             <div>
-              <span className="text-xs text-neutral-400 block font-medium">
+              <span className="text-xs text-muted-foreground block font-medium">
                 {MONITORING_PROOF_MODAL_TEXTS.DEPARTMENT}
               </span>
-              <p className="text-neutral-200 mt-0.5">
+              <p className="text-foreground mt-0.5">
                 {attendanceRecord.user.department ||
                   MONITORING_FORMATTING.EMPTY_VALUE_PLACEHOLDER}
               </p>
@@ -189,23 +193,23 @@ export function ProofPreviewModal({
           </div>
 
           <div>
-            <span className="text-xs text-neutral-400 block font-medium mb-1">
+            <span className="text-xs text-muted-foreground block font-medium mb-1">
               {MONITORING_PROOF_MODAL_TEXTS.NOTES}
             </span>
-            <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800 text-sm text-neutral-300 min-h-[4rem] max-h-28 overflow-y-auto whitespace-pre-wrap">
+            <div className="bg-muted/40 p-3 rounded-md border border-border text-xs text-foreground min-h-[4rem] max-h-28 overflow-y-auto whitespace-pre-wrap">
               {attendanceRecord.notes ||
                 MONITORING_FORMATTING.EMPTY_VALUE_PLACEHOLDER}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-neutral-800 px-6 py-4 bg-neutral-950/50">
+        <div className="flex items-center justify-between border-t border-border px-6 py-4 bg-muted/20">
           {attendanceRecord.proofImageUrl ? (
             <a
               href={attendanceRecord.proofImageUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline transition-colors"
             >
               <svg
                 className="w-4 h-4"
@@ -229,7 +233,7 @@ export function ProofPreviewModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-foreground bg-secondary hover:bg-secondary/80 rounded-md transition-colors border border-border cursor-pointer"
           >
             {MONITORING_PROOF_MODAL_TEXTS.CLOSE}
           </button>

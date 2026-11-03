@@ -6,21 +6,21 @@ export function MonitoringSummaryCards() {
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 shadow-xl backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-xs">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {MONITORING_DASHBOARD_TEXTS.KPI_TOTAL_EMPLOYEES}
             </p>
             {isLoading ? (
-              <div className="h-8 w-16 animate-pulse rounded bg-neutral-800" />
+              <div className="h-8 w-16 animate-pulse rounded bg-muted" />
             ) : (
-              <p className="text-3xl font-extrabold tracking-tight text-white">
+              <p className="text-3xl font-extrabold tracking-tight text-foreground">
                 {kpis.totalEmployees}
               </p>
             )}
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600">
             <svg
               className="h-6 w-6"
               fill="none"
@@ -38,21 +38,21 @@ export function MonitoringSummaryCards() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 shadow-xl backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-xs">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {MONITORING_DASHBOARD_TEXTS.KPI_TODAY_PRESENT}
             </p>
             {isLoading ? (
-              <div className="h-8 w-16 animate-pulse rounded bg-neutral-800" />
+              <div className="h-8 w-16 animate-pulse rounded bg-muted" />
             ) : (
-              <p className="text-3xl font-extrabold tracking-tight text-white">
+              <p className="text-3xl font-extrabold tracking-tight text-foreground">
                 {kpis.todayPresentCount}
               </p>
             )}
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600">
             <svg
               className="h-6 w-6"
               fill="none"
@@ -70,21 +70,21 @@ export function MonitoringSummaryCards() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 shadow-xl backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-xs">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {MONITORING_DASHBOARD_TEXTS.KPI_UPCOMING_HOLIDAYS}
             </p>
             {isLoading ? (
-              <div className="h-8 w-16 animate-pulse rounded bg-neutral-800" />
+              <div className="h-8 w-16 animate-pulse rounded bg-muted" />
             ) : (
-              <p className="text-3xl font-extrabold tracking-tight text-white">
+              <p className="text-3xl font-extrabold tracking-tight text-foreground">
                 {kpis.upcomingHolidaysCount}
               </p>
             )}
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-600">
             <svg
               className="h-6 w-6"
               fill="none"
