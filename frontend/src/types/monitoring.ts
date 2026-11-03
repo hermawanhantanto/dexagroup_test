@@ -138,6 +138,14 @@ export interface GetWorkforceAttendancesQuery {
   search?: string
 }
 
+export interface CreateManualAttendancePayload {
+  userId: string
+  attendanceDate: string
+  status: "SICK" | "LEAVE"
+  notes?: string
+  proofImageUrl?: string
+}
+
 export interface HolidayRecord {
   id: string
   holidayDate: string

@@ -1,10 +1,12 @@
 import React from "react"
 import { useWorkforceAttendances } from "../hooks/use-attendance-monitoring"
 import { ProofPreviewModal } from "./ProofPreviewModal"
+import { AddManualAttendanceModal } from "./AddManualAttendanceModal"
 import {
   MONITORING_ATTENDANCE_TABLE_HEADERS,
   MONITORING_ATTENDANCE_FILTER_LABELS,
   MONITORING_ATTENDANCE_STATUS_OPTIONS,
+  MONITORING_MANUAL_ATTENDANCE_DIALOG_TEXTS,
   MONITORING_CONSTRAINTS,
   MONITORING_FORMATTING,
   MONITORING_HEADER_TEXTS,
@@ -25,6 +27,8 @@ export function AttendanceMonitoringTable() {
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL")
   const [startDate, setStartDate] = React.useState<string>("")
   const [endDate, setEndDate] = React.useState<string>("")
+  const [isManualAttendanceModalOpen, setIsManualAttendanceModalOpen] =
+    React.useState<boolean>(false)
 
   const [inspectingAttendance, setInspectingAttendance] =
     React.useState<WorkforceAttendanceRecord | null>(null)
@@ -127,6 +131,27 @@ export function AttendanceMonitoringTable() {
             {MONITORING_ATTENDANCE_FILTER_LABELS.TABLE_SUBTITLE}
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setIsManualAttendanceModalOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-all cursor-pointer"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          {MONITORING_MANUAL_ATTENDANCE_DIALOG_TEXTS.OPEN_BUTTON}
+        </button>
       </div>
 
       {isDateRangeInvalid && (
@@ -529,6 +554,11 @@ export function AttendanceMonitoringTable() {
         isOpen={Boolean(inspectingAttendance)}
         attendanceRecord={inspectingAttendance}
         onClose={() => setInspectingAttendance(null)}
+      />
+
+      <AddManualAttendanceModal
+        isOpen={isManualAttendanceModalOpen}
+        onClose={() => setIsManualAttendanceModalOpen(false)}
       />
     </div>
   )

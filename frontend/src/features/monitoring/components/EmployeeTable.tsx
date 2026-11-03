@@ -10,6 +10,7 @@ import {
   Users,
   RotateCcw,
   Building2,
+  CalendarOff,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +24,7 @@ import {
   MONITORING_FORMATTING,
   MONITORING_GENDERS,
   MONITORING_HEADER_TEXTS,
+  MONITORING_MANUAL_ATTENDANCE_DIALOG_TEXTS,
   MONITORING_PAGINATION_LABELS,
   MONITORING_ROLES,
   MONITORING_TABLE_HEADERS,
@@ -31,6 +33,7 @@ import { useEmployees } from "../hooks/use-employees"
 import { AddEmployeeModal } from "./AddEmployeeModal"
 import { EditEmployeeModal } from "./EditEmployeeModal"
 import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog"
+import { AddManualAttendanceModal } from "./AddManualAttendanceModal"
 import type {
   EmployeeGender,
   EmployeeRecord,
@@ -80,6 +83,7 @@ export function EmployeeTable({
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false)
   const [employeeToEdit, setEmployeeToEdit] = React.useState<EmployeeRecord | null>(null)
   const [employeeToDelete, setEmployeeToDelete] = React.useState<EmployeeRecord | null>(null)
+  const [employeeForAbsence, setEmployeeForAbsence] = React.useState<EmployeeRecord | null>(null)
 
   React.useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -412,6 +416,15 @@ export function EmployeeTable({
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
+                            onClick={() => setEmployeeForAbsence(employee)}
+                            className="inline-flex size-7 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                            title={MONITORING_MANUAL_ATTENDANCE_DIALOG_TEXTS.OPEN_BUTTON}
+                            aria-label={`${MONITORING_MANUAL_ATTENDANCE_DIALOG_TEXTS.OPEN_BUTTON} ${employeeFullName}`}
+                          >
+                            <CalendarOff className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => setEmployeeToEdit(employee)}
                             className="inline-flex size-7 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                             aria-label={`${MONITORING_DIALOG_TEXTS.EDIT} ${employeeFullName}`}
@@ -494,6 +507,12 @@ export function EmployeeTable({
         employee={employeeToDelete}
         isOpen={Boolean(employeeToDelete)}
         onClose={() => setEmployeeToDelete(null)}
+      />
+
+      <AddManualAttendanceModal
+        isOpen={Boolean(employeeForAbsence)}
+        onClose={() => setEmployeeForAbsence(null)}
+        preselectedUserId={employeeForAbsence?.id}
       />
     </div>
   )

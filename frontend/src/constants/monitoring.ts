@@ -259,6 +259,32 @@ export const MONITORING_ATTENDANCE_STATUS_OPTIONS = [
   { label: "Absent", value: "ABSENT" },
 ] as const
 
+export const MONITORING_MANUAL_ATTENDANCE_STATUS_OPTIONS = [
+  { label: "Sick", value: "SICK" },
+  { label: "Leave", value: "LEAVE" },
+] as const
+
+export const MONITORING_MANUAL_ATTENDANCE_DIALOG_TEXTS = {
+  TITLE: "Log Manual Attendance",
+  SUBTITLE: "Record an official sick or leave absence for an employee who did not submit attendance.",
+  FIELD_EMPLOYEE: "Select Employee",
+  FIELD_EMPLOYEE_PLACEHOLDER: "Choose employee...",
+  FIELD_DATE: "Attendance Date",
+  FIELD_STATUS: "Absence Type",
+  FIELD_NOTES: "Reason / Notes",
+  FIELD_NOTES_PLACEHOLDER: "e.g., Medical leave with doctor's prescription",
+  FIELD_PROOF_URL: "Proof Document / Medical Note URL (Optional)",
+  FIELD_PROOF_URL_PLACEHOLDER: "https://example.com/document.pdf",
+  EMPLOYEE_REQUIRED: "Employee selection is required.",
+  DATE_REQUIRED: "Attendance date is required.",
+  STATUS_REQUIRED: "Absence status is required.",
+  CREATE_BUTTON: "Log Attendance",
+  OPEN_BUTTON: "Log Absence",
+  CONFLICT_ERROR: "An attendance record already exists for this employee on the selected date.",
+  EMPLOYEE_NOT_FOUND: "Selected employee was not found.",
+  CREATE_SUCCESS: "Manual attendance logged successfully.",
+} as const
+
 export const MONITORING_PROOF_MODAL_TEXTS = {
   TITLE: "Attendance Proof Inspection",
   SUBTITLE: "Review submitted verification selfie and attendance details.",
