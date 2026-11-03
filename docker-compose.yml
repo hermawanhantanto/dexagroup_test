@@ -4,19 +4,78 @@ services:
     container_name: ${MYSQL_CONTAINER_NAME:-dexa_mysql}
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-attendance_db}
+      MYSQL_USER: ${MYSQL_USER:-app_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app_password}
     ports:
       - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
+
+  backend_attendance:
+    build:
+      context: ./backend_attendance
+      dockerfile: Dockerfile
+    container_name: dexa_backend_attendance
+    restart: always
+    environment:
+      PORT: 3000
+      DATABASE_URL: "mysql://${MYSQL_USER:-app_user}:${MYSQL_PASSWORD:-app_password}@mysql:3306/${MYSQL_DATABASE:-attendance_db}"
+      JWT_ACCESS_SECRET: "${JWT_ACCESS_SECRET:-dexa_access_secret_key_change_in_production}"
+      JWT_ACCESS_EXPIRES_IN: "15m"
+      JWT_REFRESH_SECRET: "${JWT_REFRESH_SECRET:-dexa_refresh_secret_key_change_in_production}"
+      JWT_REFRESH_EXPIRES_IN: "7d"
+      FRONTEND_URL: "http://localhost:5173"
+      SUPABASE_URL: "https://ombaogdblmoqybchpvfq.supabase.co"
+      SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYmFvZ2RibG1vcXliY2hwdmZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzQwNzg1MCwiZXhwIjoyMTAyOTgzODUwfQ.75w3p8OESXv_tyXFv62X14wV8ufROqZhKNZe1qTsT88"
+      SUPABASE_STORAGE_BUCKET: "dexa_test"
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  backend_monitoring:
+    build:
+      context: ./backend_monitoring
+      dockerfile: Dockerfile
+    container_name: dexa_backend_monitoring
+    restart: always
+    environment:
+      PORT: 3002
+      DATABASE_URL: "mysql://${MYSQL_USER:-app_user}:${MYSQL_PASSWORD:-app_password}@mysql:3306/${MYSQL_DATABASE:-attendance_db}"
+      JWT_ACCESS_SECRET: "${JWT_ACCESS_SECRET:-dexa_access_secret_key_change_in_production}"
+      JWT_ACCESS_EXPIRES_IN: "15m"
+      JWT_REFRESH_SECRET: "${JWT_REFRESH_SECRET:-dexa_refresh_secret_key_change_in_production}"
+      JWT_REFRESH_EXPIRES_IN: "7d"
+      FRONTEND_URL: "http://localhost:5173"
+      SUPABASE_URL: "https://ombaogdblmoqybchpvfq.supabase.co"
+      SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tYmFvZ2RibG1vcXliY2hwdmZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzQwNzg1MCwiZXhwIjoyMTAyOTgzODUwfQ.75w3p8OESXv_tyXFv62X14wV8ufROqZhKNZe1qTsT88"
+      SUPABASE_STORAGE_BUCKET: "dexa_test"
+    ports:
+      - "3002:3002"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dexa_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend_attendance
+      - backend_monitoring
 
 volumes:
   mysql_data:
